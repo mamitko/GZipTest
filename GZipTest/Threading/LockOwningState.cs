@@ -5,7 +5,7 @@ namespace GZipTest.Threading
 {
     internal struct LockOwningState
     // This struct is mutable (even worse, it has modifying methods) so it should be used with care, 
-    // e.g. do not use it as type of properties or readonly fields, do not copy (unless you exactly know what are you doing)
+    // e.g. do not use it as type of properties or readonly fields, do not copy, unless you exactly know what are you doing.
     {
         public static readonly LockOwningState Ownerless = default(LockOwningState);
 
