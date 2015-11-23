@@ -3,6 +3,8 @@ using System.Threading;
 
 namespace GZipTest.Threading
 {
+    //todo insert Thread.MemoryBarier invocations
+
     public class MonitorSimple: IDisposable
     {
         private readonly ControlFlowQueue _readyQueue = new ControlFlowQueue();
@@ -21,7 +23,7 @@ namespace GZipTest.Threading
             // Consider replacing with another exception or even assertion (it's private method so think it's accaptable) 
             // and
             // Split ControlFlowQueue.TryEnter(bool) into Enter() end TryEnter() with no params. 
-            // It was supposed to be a sort of incapsulation, but actually just confuses.
+            // It was supposed to work as a sort of incapsulation, but actually just makes a mess and confuses.
         }
         
         public bool TryEnter()

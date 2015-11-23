@@ -6,13 +6,13 @@ using System.Threading;
 namespace GZipTest.Threading
 {
     struct SpinWaitStolen
-    // Сopypasted from FCL source code a little bit less than totally 
+    // Сopypasted from FCL source code a little bit less than completly 
     {
         [DllImport("kernel32.dll"), HostProtection(SecurityAction.LinkDemand, ExternalThreading = true)]
         static extern bool SwitchToThread();
 
         private static readonly bool IsSingleProcessor = Environment.ProcessorCount == 1;
-        // Author assumed that singlecore hyperthreading CPUs are quite rare so number of logical cores will fit this needs.
+        // Author assumed that singlecore hyperthreading CPUs are quite rare, so number of logical cores will fit the needs.
         // Think it works for virtual machines too.
 
         private int _spinsOnceDone;

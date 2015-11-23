@@ -57,7 +57,7 @@ namespace GZipTest.Parallelizing
         }
 
         /// <summary>
-        /// Takes an item away from collection. If collection is empty, blocks control flow and waits until new item come or CompleteAdding is invoked.
+        /// Takes an item away from collection. If collection is empty, blocks control flow and waits until new item comes or CompleteAdding is invoked.
         /// </summary>
         /// <returns>Whether an item is taken or not.</returns>
         public bool TakeOrTryWait(out T item)

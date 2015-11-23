@@ -5,6 +5,9 @@ using GZipTest.Threading;
 
 namespace GZipTest.Parallelizing
 {
+    /// <summary>
+    /// Executes an action on IEnumerable set of items of some same type. Trys to do it parallely.
+    /// </summary>
     internal class ForAll<T> : IDisposable
     {
         private readonly ParallelSettings _settings;
@@ -90,7 +93,7 @@ namespace GZipTest.Parallelizing
         
         public event EventHandler<WorkCompleteEventArgs> Completed;
 
-        protected virtual void OnCompleted(WorkCompleteEventArgs e)
+        private void OnCompleted(WorkCompleteEventArgs e)
         {
             var handler = Completed;
             if (handler != null) handler(this, e);
