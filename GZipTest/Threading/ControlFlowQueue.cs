@@ -31,7 +31,7 @@ namespace GZipTest.Threading
 
             // trying to follow MSDN:
             // ... If the thread cannot enter without blocking, the method returns false, and the thread does not enter the critical section.
-            // i.e. the spining was not a blocking
+            // i.e. the spinning was not a blocking
             if (!threadBlockingAllowed)
                 return false;
 
