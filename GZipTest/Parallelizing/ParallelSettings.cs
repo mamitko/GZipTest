@@ -2,7 +2,7 @@
 {
     public struct ParallelSettings
     {
-        // структура мутабельной сделана намерянно
+        // структура мутабельной сделана намеренно
 
         private Cancellation _cancellation;
 

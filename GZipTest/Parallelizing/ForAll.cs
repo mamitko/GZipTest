@@ -38,7 +38,7 @@ namespace GZipTest.Parallelizing
             OnThreadsFinished();    
         }
 
-        public ForAll(IEnumerable<T> source, ParallelSettings settings, Action<T> action)
+        public ForAll(IEnumerable<T> source, Action<T> action, ParallelSettings settings = default(ParallelSettings))
         {
             _source = source;
 
