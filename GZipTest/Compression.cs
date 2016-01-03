@@ -33,7 +33,7 @@ namespace GZipTest
             var decompressed = CompressedPortion.ReadAllFrom(src)
                 .Buffered(_cancellation, PrereadBufferSizePcs) // This line is optional but for certain reasons it increses CPU utilisation.
                 .SelectParallely(chunk => chunk.Decompress(), _cancellation)
-                .WithBoundedOutputCapacity(OutputBufferSizePcs); // This line prevents OutOfMemmoryException on large files or with slow output disk storages.
+                .WithBoundedOutputCapacity(OutputBufferSizePcs); // This line is a sort of "optional" too. Besides giving a perfomance gain, it prevents OutOfMemmoryException on large files or with slow output disk storages.
 
             foreach (var portion in decompressed)
             {
