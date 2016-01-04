@@ -60,7 +60,7 @@ namespace GZipTest
                 {
                     var errorLogFile = WriteErrorLog(e, dstFileName); 
                     Console.WriteLine(e.Message + Environment.NewLine + "For details please see " + errorLogFile);
-                    // в это место можно писать (если запрет не стал причиной экспешена) и, наверное, 
+                    // в это место на диске можно писать (если запрет не стал причиной экспешена) и, наверное, 
                     // пользователь именно там будет искать результат, и найдет описание причины неудачи
                 }
 

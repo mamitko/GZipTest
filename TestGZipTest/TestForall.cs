@@ -7,13 +7,13 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace TestGZipTest
 {
     [TestClass]
-    public class TestForeach
+    public class TestForall
     {
         [TestMethod]
         public void TestWorksInGeneral()
         {
             var list = new List<int>();
-            var forAll = new ForAll<int>(Enumerable.Range(0, 10), new ParallelSettings(),
+            var forAll = new ForAll<int>(Enumerable.Range(0, 10),
                 i =>
                 {
                     lock (list)

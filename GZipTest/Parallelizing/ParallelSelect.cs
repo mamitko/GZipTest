@@ -34,10 +34,12 @@ namespace GZipTest.Parallelizing
 
         public IEnumerator<TResult> GetEnumerator()
         {
+            // ¬ промышленном коде это, наверное, был бы отдельный _рукописный_ класс (а не автомат+замыкани€).
+
             var buffer = new BlockingQueue<TResult>(_outBufferCapacity ?? -1);
             var completionInfo = default(WorkCompleteEventArgs);
 
-            using (var forAll = new ForAll<TSource>(_source, _settings, i => buffer.AddIfNotCompleted(_selectorFunc(i))))
+            using (var forAll = new ForAll<TSource>(_source, i => buffer.AddIfNotCompleted(_selectorFunc(i)), _settings))
             {
                 forAll.Completed += (sender, args) =>
                 {

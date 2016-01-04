@@ -25,7 +25,7 @@ namespace GZipTest.Parallelizing
             // if (_disposeReqeusted)
             //    throw new ObjectDisposedException(ToString());
             // Think it's not good idea to throw ObjectDisposedException here since hypothetically TryGetNext can be invoked, and then "paused" "before" even started.
-            // At the same time Dispose can be invoked at another thread (e.g. in case of cancelling some operation). This will cause exception at seems to be a legal TryGetNext invocation.
+            // At the same time Dispose can be invoked at another thread (e.g. in case of cancelling some operation). This will cause exception on seems to be a legal TryGetNext() invocation.
             
             // Asume normaly Dispose is not supposed be invoked before "last" TryGetNext() returns.
             // If it is, let's treat it as cancelation, as in general, cancellation seems to be the only way it could happened;
