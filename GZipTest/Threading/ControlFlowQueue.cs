@@ -17,6 +17,9 @@ namespace GZipTest.Threading
         {
             const int spinCount = 1000;
 
+            if (!threadBlockingAllowed)
+                return Interlocked.CompareExchange(ref _waitersCount, 1, 0) == 0;
+
             var spinWait = new SpinWaitStolen();
             for (var i = 0; i < spinCount; i++)
             {
@@ -28,13 +31,7 @@ namespace GZipTest.Threading
 
             if (Interlocked.Increment(ref _waitersCount) == 1)
                 return true;
-
-            // trying to follow MSDN:
-            // ... If the thread cannot enter without blocking, the method returns false, and the thread does not enter the critical section.
-            // i.e. the spinning was not a blocking
-            if (!threadBlockingAllowed)
-                return false;
-
+                        
             _kernelLock.WaitOne();
             return true;
         }

@@ -58,17 +58,16 @@ namespace GZipTest.Threading
         {
             _owning.CheckIsOwnedByCurrentThread();
 
+            var savedOwningState = _owning;
+            _owning = LockOwningState.Ownerless;
+
             Interlocked.Increment(ref _waitersCount);
             // it's vitally important to incremet _waitersCount before releasing _readyQueue. 
             // Otherwise theoretically Pulse() can be invoked before _watersCount is incremented, find no waiters and do not "open" _waitBarier.
 
-            var savedOwningState = _owning;
-            _owning = LockOwningState.Ownerless;
-
             _readyQueue.Exit();
 
             _waitBarier.WaitOne();
-
             Interlocked.Decrement(ref _waitersCount);
 
             _readyQueue.Enter();
@@ -88,7 +87,6 @@ namespace GZipTest.Threading
             _owning.CheckIsOwnedByCurrentThread();
 
             if (Thread.VolatileRead(ref _waitersCount) == 0)
-                //it's safe since Pulse() and Wait() can be invoked inside "locked" section only
                 return false;
 
             _waitBarier.Set();
@@ -96,7 +94,7 @@ namespace GZipTest.Threading
         }
 
         public LockHandle GetLocked()
-        // For use as using(Xxx.GetLocked()) It's boxing free.
+        
         {
             Enter();
             return new LockHandle(this);
