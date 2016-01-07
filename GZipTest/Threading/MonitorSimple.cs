@@ -10,7 +10,7 @@ namespace GZipTest.Threading
         private readonly ControlFlowQueue _readyQueue = new ControlFlowQueue();
 
         private int _waitersCount;
-        private readonly AutoResetEvent _waitBarier = new AutoResetEvent(false); 
+        private readonly AutoResetEvent _waitGate = new AutoResetEvent(false); 
 
         private LockOwningState _owning = LockOwningState.Ownerless;
 
@@ -58,20 +58,18 @@ namespace GZipTest.Threading
         {
             _owning.CheckIsOwnedByCurrentThread();
 
-            var savedOwningState = _owning;
-            _owning = LockOwningState.Ownerless;
-
             Interlocked.Increment(ref _waitersCount);
             // it's vitally important to incremet _waitersCount before releasing _readyQueue. 
-            // Otherwise theoretically Pulse() can be invoked before _watersCount is incremented, find no waiters and do not "open" _waitBarier.
+            // Otherwise theoretically Pulse() can be invoked before _watersCount is incremented, find no waiters and do not "open" _waitGate.
 
+            var savedOwningState = _owning;
+            _owning = LockOwningState.Ownerless;
             _readyQueue.Exit();
 
-            _waitBarier.WaitOne();
+            _waitGate.WaitOne();
             Interlocked.Decrement(ref _waitersCount);
 
             _readyQueue.Enter();
-
             _owning = savedOwningState;
         }
 
@@ -89,7 +87,7 @@ namespace GZipTest.Threading
             if (Thread.VolatileRead(ref _waitersCount) == 0)
                 return false;
 
-            _waitBarier.Set();
+            _waitGate.Set();
             return true;
         }
 
@@ -103,7 +101,7 @@ namespace GZipTest.Threading
         public void Dispose()
         {
             _readyQueue.Dispose();
-            ((IDisposable)_waitBarier).Dispose();
+            ((IDisposable)_waitGate).Dispose();
             // Not sure is it good idea or not to invoke Dispose this way. Perhaps there were some reasons to make it protected in 3.5
         }
 
