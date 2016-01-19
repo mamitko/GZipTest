@@ -237,8 +237,8 @@ namespace TestGZipTest
 
             Thread.VolatileWrite(ref finished, 1);
         }
-        
-        private static void AssertThrows<TOfException>(Action action) where TOfException : Exception
+
+        public static void AssertThrows<TOfException>(Action action) where TOfException : Exception
         {
             Exception thrown = null;
             try
@@ -266,7 +266,7 @@ namespace TestGZipTest
             return threads;
         }
 
-        private static void WaitAlittle()
+        public static void WaitAlittle()
         {
             Thread.Sleep(50);
         }

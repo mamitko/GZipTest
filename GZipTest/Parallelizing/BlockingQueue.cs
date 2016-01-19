@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using GZipTest.Threading;
 
 namespace GZipTest.Parallelizing
@@ -72,7 +73,7 @@ namespace GZipTest.Parallelizing
 
                 if (_queue.Count <= 0)
                 {
-                    //todo: Debug.Assert(IsAddingCompleted)
+                    Debug.Assert(IsAddingCompleted);
                     item = default(T);
                     return false;
                 }

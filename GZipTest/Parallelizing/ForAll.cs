@@ -1,45 +1,27 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading;
 using GZipTest.Threading;
 
 namespace GZipTest.Parallelizing
 {
     /// <summary>
-    /// Executes an action on IEnumerable set of items of some same type. Trys to do it parallely.
+    /// Executes an action on each item of IEnumerable. Trys to do it parallely.
     /// </summary>
-    internal class ForAll<T> : IDisposable
+    internal class ForAll<T>
     {
-        private readonly ParallelSettings _settings;
-
-        private readonly Action<T> _action;
         private readonly IEnumerable<T> _source;
+        private readonly Action<T> _action;
+        private readonly ParallelSettings _settings;
+        private Action<WorkCompletionInfo> _compeltionCallbacks;
+
         private EnumerableThreadSafeWrapper<T> _wrappedSource;
-
-        private Exception _happenedExceptions;
-
+        private readonly ManualResetEvent _isCompletedEvent = new ManualResetEvent(false);
         private readonly BoolFlag _started = new BoolFlag();
-        private readonly BoolFlag _finished = new BoolFlag();
         
-        private bool NothingExceptionalHapened()
-        {
-            return _happenedExceptions == null && !_settings.Cancellation.IsCanceled;
-        }
-
-        private void OnThreadsFinished()
-        {
-            if (_finished.InterlockedCompareAssign(true, false))
-                return;
-            
-            _settings.Cancellation.Canceled -= Cancellation_Canceled;
-            DisposeSourceAdapter();
-            OnCompleted( new WorkCompleteEventArgs(_happenedExceptions, _settings.Cancellation.IsCanceled) );
-        }
-
-        private void Cancellation_Canceled(object sender, EventArgs args)
-        {
-            OnThreadsFinished();    
-        }
+        private WorkCompletionInfo _competionResult;
+        private Exception _firstHappenedException;
 
         public ForAll(IEnumerable<T> source, Action<T> action, ParallelSettings settings = default(ParallelSettings))
         {
@@ -49,20 +31,35 @@ namespace GZipTest.Parallelizing
             _action = action;
             _settings.Cancellation = _settings.Cancellation ?? Cancellation.Uncancallable;
 
-            _settings.Cancellation.Canceled += Cancellation_Canceled;
+            _settings.Cancellation.RegisterCallback(Cancellation_Canceled);
+        }
+
+        public WorkCompletionInfo CompletionResult
+        {
+            get
+            {
+                _isCompletedEvent.WaitOne();
+                return _competionResult;
+            }
+        }
+
+        public void OnCompleted(Action<WorkCompletionInfo> completedCallback)
+        {
+            _compeltionCallbacks += completedCallback;
         }
 
         public void Start()
         {
             if (_started.InterlockedCompareAssign(true, false))
                 return;
-            
+
             _wrappedSource = new EnumerableThreadSafeWrapper<T>(_source);
 
             var threadCount = _settings.ForcedDegreeOfParallelizm ?? Parallelism.DefaultDegree;
             var threadsFinished = 0;
-            
-            for (var i = 0; i < threadCount; i++)
+
+            Debug.Assert(threadCount > 0);
+            for (var i = 0; i < Math.Max(1, threadCount); i++)
             {
                 var th = new Thread(
                     () =>
@@ -77,37 +74,43 @@ namespace GZipTest.Parallelizing
                         }
                         catch (Exception e)
                         {
-                            Interlocked.CompareExchange(ref _happenedExceptions, e, null);
+                            Interlocked.CompareExchange(ref _firstHappenedException, e, null);
                         }
                         finally
                         {
                             if (Interlocked.Increment(ref threadsFinished) == threadCount)
-                                OnThreadsFinished();
+                                OnCompleted();
                         }
-                    }) 
-                    {IsBackground = true};
-            
+                    })
+                { IsBackground = true };
+
                 th.Start();
             }
         }
-        
-        public event EventHandler<WorkCompleteEventArgs> Completed;
 
-        private void OnCompleted(WorkCompleteEventArgs e)
+        private void Cancellation_Canceled()
         {
-            var handler = Completed;
-            if (handler != null) handler(this, e);
+            OnCompleted();
         }
 
-        private void DisposeSourceAdapter()
+        private bool NothingExceptionalHapened()
         {
+            return _firstHappenedException == null && !_settings.Cancellation.IsCanceled;
+        }
+
+        private void OnCompleted()
+        {
+            var result = new WorkCompletionInfo(_firstHappenedException, _settings.Cancellation.IsCanceled);
+            if (Interlocked.CompareExchange(ref _competionResult, result, null) != null)
+                return;
+
             if (_wrappedSource != null)
                 _wrappedSource.Dispose();
-        }
 
-        public void Dispose()
-        {
-            DisposeSourceAdapter();
+            if (_compeltionCallbacks != null)
+                _compeltionCallbacks(result);
+
+            _isCompletedEvent.Set();
         }
     }
 }
