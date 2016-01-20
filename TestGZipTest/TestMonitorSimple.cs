@@ -206,7 +206,7 @@ namespace TestGZipTest
 
             WaitAlittle();
 
-            AssertThrows<SynchronizationLockException>(() => monitor.Exit());
+            AssertEx.Throws<SynchronizationLockException>(() => monitor.Exit());
 
             Thread.VolatileWrite(ref finished, 1);
         }
@@ -217,10 +217,9 @@ namespace TestGZipTest
             var monitor = new MonitorSimple();
             var finished = 0;
 
-            // noone has lock
-            AssertThrows<SynchronizationLockException>(() => { monitor.Wait(); });
-            AssertThrows<SynchronizationLockException>(() => { monitor.Pulse(); });
-            AssertThrows<SynchronizationLockException>(() => { monitor.PulseAll(); });
+            AssertEx.Throws<SynchronizationLockException>(() => { monitor.Wait(); });
+            AssertEx.Throws<SynchronizationLockException>(() => { monitor.Pulse(); });
+            AssertEx.Throws<SynchronizationLockException>(() => { monitor.PulseAll(); });
 
             var th = new Thread(() =>
             {
@@ -231,29 +230,14 @@ namespace TestGZipTest
             WaitAlittle();
 
             // other thread has lock
-            AssertThrows<SynchronizationLockException>(() => { monitor.Wait(); });
-            AssertThrows<SynchronizationLockException>(() => { monitor.Pulse(); });
-            AssertThrows<SynchronizationLockException>(() => { monitor.PulseAll(); });
+            AssertEx.Throws<SynchronizationLockException>(() => { monitor.Wait(); });
+            AssertEx.Throws<SynchronizationLockException>(() => { monitor.Pulse(); });
+            AssertEx.Throws<SynchronizationLockException>(() => { monitor.PulseAll(); });
 
             Thread.VolatileWrite(ref finished, 1);
         }
 
-        public static void AssertThrows<TOfException>(Action action) where TOfException : Exception
-        {
-            Exception thrown = null;
-            try
-            {
-                action();
-            }
-            catch (Exception e)
-            {
-                thrown = e;
-            }
-
-            Assert.IsTrue(thrown is TOfException);
-        }
-
-        private static List<Thread> RunSimultanously(int threadCount, Action action, bool waitUntilFinished = true)
+       private static List<Thread> RunSimultanously(int threadCount, Action action, bool waitUntilFinished = true)
         {
             var threads = Enumerable.Repeat(0, threadCount).Select(
                 i => new Thread(() => action()) { IsBackground = true }).ToList();

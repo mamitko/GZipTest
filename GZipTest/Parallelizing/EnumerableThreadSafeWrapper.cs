@@ -7,6 +7,8 @@ namespace GZipTest.Parallelizing
 {
     internal class EnumerableThreadSafeWrapper<T> : IDisposable
     {
+        //todo? run dispose from finalizer?? 
+
         private readonly IEnumerable<T> _source;
         
         private readonly MonitorSimple _sourceLock = new MonitorSimple();
@@ -20,6 +22,7 @@ namespace GZipTest.Parallelizing
             _source = source;
         }
         
+        //todo все-таки перекроить. Dispose не должен влиять на поведение. Отмену сделать через нормальную отмену.
         public bool TryGetNext(out T item)
         {
             // if (_disposeReqeusted)
@@ -31,9 +34,6 @@ namespace GZipTest.Parallelizing
             // If it is, let's treat it as cancelation, as in general, cancellation seems to be the only way it could happened;
             
             // In other words noone will knownly dispose an object before getting everything he/she wants from it.
-
-            // It's not 100%-surely Framework Design Guidelines complaint, but they are not 100% clear about when to throw ObjectDisposedException (and when not),
-            // and says completly nothing about implementing and using IDisposable in multithreading environment.
 
             item = default(T);
             if (_disposeReqeusted)

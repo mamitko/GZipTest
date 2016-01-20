@@ -10,7 +10,17 @@ namespace GZipTest.Parallelizing
 
         private Action _onCancelledCallbacks;
         private readonly BoolFlag _isCanceled = new BoolFlag(false);
-        
+
+        public static Cancellation CreateLinked(Cancellation source)
+        {
+            var cancellation = new Cancellation();
+            source.RegisterCallback(() =>
+            {
+                cancellation.Cancel();
+            });
+            return cancellation;
+        }
+
         public void Cancel()
         {
             if (this == Uncancallable)
@@ -21,8 +31,6 @@ namespace GZipTest.Parallelizing
             
             if (_onCancelledCallbacks != null)
                 _onCancelledCallbacks();
-
-            _onCancelledCallbacks = null;
         }
 
         public bool IsCanceled { get { return _isCanceled; } }
@@ -37,6 +45,12 @@ namespace GZipTest.Parallelizing
 
         public void RegisterCallback(Action onCacelledCallback)
         {
+            if (IsCanceled)
+            {
+                onCacelledCallback();
+                return;
+            }
+
             var sw = new SpinWaitStolen();
             while (true)
             {

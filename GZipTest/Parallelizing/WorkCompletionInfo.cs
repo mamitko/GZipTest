@@ -2,7 +2,7 @@ using System;
 
 namespace GZipTest.Parallelizing
 {
-    public class WorkCompletionInfo : EventArgs
+    public class WorkCompletionInfo
     {
         public WorkCompletionInfo(Exception error, bool cancelled)
         {

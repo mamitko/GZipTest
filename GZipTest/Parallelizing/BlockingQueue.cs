@@ -27,21 +27,6 @@ namespace GZipTest.Parallelizing
             }
         }
 
-        public void Add(T item)
-        {
-            using(_sync.GetLocked())
-            {
-                if (IsAddingCompleted)
-                    throw new InvalidOperationException();
-
-                while (_boundedCapacity >= 0 && _queue.Count >= _boundedCapacity && !IsAddingCompleted)
-                    _sync.Wait();
-         
-                _queue.Enqueue(item);
-                _sync.Pulse();
-            }
-        }
-
         public bool AddIfNotCompleted(T item)
         {
             if (IsAddingCompleted)
@@ -57,12 +42,35 @@ namespace GZipTest.Parallelizing
             }
         }
 
+        public IEnumerable<T> GetConsumingEnumerable()
+        {
+            T item;
+            while (TakeOrTryWait(out item))
+            {
+                yield return item;
+            }
+        }
+
+        private void Add(T item)
+        {
+            using (_sync.GetLocked())
+            {
+                if (IsAddingCompleted)
+                    throw new InvalidOperationException();
+
+                while (_boundedCapacity >= 0 && _queue.Count >= _boundedCapacity && !IsAddingCompleted)
+                    _sync.Wait();
+
+                _queue.Enqueue(item);
+                _sync.Pulse();
+            }
+        }
+
         /// <summary>
         /// Takes an item away from collection. If collection is empty, blocks control flow and waits until new item comes or CompleteAdding is invoked.
         /// </summary>
         /// <returns>Whether an item is taken or not.</returns>
-        public bool TakeOrTryWait(out T item)
-        // имя метода странноватое, но вроде бы точно отражает то, что метод делает
+        private bool TakeOrTryWait(out T item)
         {
             using (_sync.GetLocked())
             {

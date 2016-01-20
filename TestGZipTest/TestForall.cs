@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using System.Threading.Tasks;
 using GZipTest.Parallelizing;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -25,7 +24,7 @@ namespace TestGZipTest
                 });
 
             var completed = new ManualResetEvent(false);
-            forAll.OnCompleted(s => completed.Set());
+            forAll.RegisterOnfinished(_ => completed.Set());
 
             forAll.Start();
 
@@ -47,7 +46,6 @@ namespace TestGZipTest
             var endlessSource = Enumerable.Range(0, 10).Select(n =>
             {
                 if (n > 3)
-                    //todo move to separated statc class TestHelpers
                     TestMonitorSimple.WaitAlittle();
 
                 lastEnumerated = n;
@@ -57,17 +55,18 @@ namespace TestGZipTest
             var fa = new ForAll<int>(endlessSource, n => Thread.VolatileWrite(ref lastProcessed, n),
                 new ParallelSettings {Cancellation = cancellation});
 
-            fa.OnCompleted( s => cancelled = s.Cancelled);
+            fa.RegisterOnfinished(f => cancelled = f.IsCancelled);
 
             fa.Start();
             TestMonitorSimple.WaitAlittle();
             cancellation.Cancel();
             TestMonitorSimple.WaitAlittle();
 
+            AssertEx.Throws<OperationCanceledException>(() => fa.Wait());
             Assert.IsTrue(lastProcessed > -1, "Looks like processing had not even started");
             Assert.IsTrue(lastEnumerated > -1, "Looks like enumeration of source had not even started");
             Assert.IsTrue(cancelled != null && cancelled.Value);
-            Assert.IsTrue(fa.CompletionResult.Cancelled);
+            Assert.IsTrue(fa.IsCancelled);
             Assert.IsTrue(lastProcessed < 9);
             Assert.IsTrue(lastEnumerated < 9);
         }
