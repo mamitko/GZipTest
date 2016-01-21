@@ -22,12 +22,13 @@ namespace GZipTest
                 return ErrorAppExitCode;
             
             var compression = new Compression();
+            compression.ProgressChanged += (_,__) => Console.Write("░");
 
             Console.CancelKeyPress += (sender, e) =>
             {
                 e.Cancel = true;
                 compression.Cancel();
-                Console.WriteLine("Cancelling...");
+                Console.WriteLine("\nCancelling...");
             };
 
             try
