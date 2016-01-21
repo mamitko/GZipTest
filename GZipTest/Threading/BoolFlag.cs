@@ -14,6 +14,12 @@ namespace GZipTest.Threading
             return value ? TrueValue : FalseValue;
         }
 
+
+        public static implicit operator bool(BoolFlag flag)
+        {
+            return flag._value == TrueValue;
+        }
+      
         public bool InterlockedCompareAssign(bool newValue, bool comparand)
         {
             return Interlocked.CompareExchange(ref _value, 

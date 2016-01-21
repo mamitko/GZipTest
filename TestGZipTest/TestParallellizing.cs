@@ -10,7 +10,7 @@ namespace TestGZipTest
     class MyCustomException : Exception { };
 
     [TestClass]
-    public class TestParallelling
+    public class TestParallellizing
     {
         [TestMethod]
         public void TestInGeneral()
@@ -51,7 +51,7 @@ namespace TestGZipTest
                 return i*2;
             });
 
-            AssertThrows<CrossThreadTransferredException>(() => select.ToList(), 
+            AssertEx.Throws<CrossThreadTransferredException>(() => select.ToList(), 
                 e => e.InnerException is MyCustomException);
         }
 
@@ -70,8 +70,8 @@ namespace TestGZipTest
 
             cancellation.Cancel();
 
-            AssertThrows<OperationCanceledException>(() => selectResult.AsEnumerable().ToList());
-            Assert.IsTrue(maxNumber < int.MaxValue);
+            AssertEx.Throws<OperationCanceledException>(() => selectResult.AsEnumerable().ToList());
+            Assert.IsTrue(maxNumber < int.MaxValue-1);
         }
 
         [TestMethod]
@@ -92,7 +92,7 @@ namespace TestGZipTest
             }).Start();
 
 
-            AssertThrows<OperationCanceledException>(() => select.AsEnumerable().ToList());
+            AssertEx.Throws<OperationCanceledException>(() => select.AsEnumerable().ToList());
             Assert.AreEqual(1, lastValue);
 
             stickWhileEvent.Set();
@@ -159,24 +159,6 @@ namespace TestGZipTest
             //AssertThrows<ObjectDisposedException>(() => wrapper.TryGetNext(out item));
             // This line was commented for sertain reasons. 
             // For details please see EnumerableThreadSafeWrapper<T>.TryGetNext() implementation
-        }
-
-        public static void AssertThrows<TException>(Action a, Func<TException, bool> predicate = null, bool anyDescendantSuits = true, string message = "") where TException : Exception
-        {
-            try
-            {
-                a();
-            }
-            catch (TException e)
-            {
-                Assert.IsTrue(anyDescendantSuits || e.GetType() == typeof(TException), message);
-
-                if (predicate != null)
-                    Assert.IsTrue(predicate(e));
-
-                return;
-            }
-            Assert.Fail(message);
         }
 
         private static IEnumerable<int> StuckDownEnumerable(WaitHandle stickWhileEvent)

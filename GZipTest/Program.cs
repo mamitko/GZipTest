@@ -4,6 +4,7 @@ using System.IO;
 using System.IO.Compression;
 
 //compress "d:\downloads\The Avengers.mkv" "c:\tmp\avgs.compressed"
+//decompress "c:\tmp\avgrs.compressed"  "D:\Downloads\The Avengers decompressed.mkv" 
 
 namespace GZipTest
 {
@@ -19,7 +20,10 @@ namespace GZipTest
             string srcFileName;
             string dstFileName;
             if (!ValidateStartupAgrs(args, out mode, out srcFileName, out dstFileName))
+            {
+                Console.WriteLine("The syntax of the command params is incorrect. Showld be: (compress|decompress) Source Destination" );
                 return ErrorAppExitCode;
+            }
             
             var compression = new Compression();
             compression.ProgressChanged += (_,__) => Console.Write("░");

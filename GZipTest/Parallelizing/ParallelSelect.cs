@@ -33,33 +33,25 @@ namespace GZipTest.Parallelizing
         }
 
         public IEnumerator<TResult> GetEnumerator()
-        {
-            // ¬ промышленном коде это, наверное, был бы отдельный _рукописный_ класс (а не автомат+замыкани€).
+        { 
+            // ¬ "промышленном" коде это, наверное, был бы отдельный _рукописный_ класс (а не конечный автомат + замыкани€).
 
             var buffer = new BlockingQueue<TResult>(_outBufferCapacity ?? -1);
-            var completionInfo = default(WorkCompleteEventArgs);
+            
+            var forAll = new ForAll<TSource>(_source, i => buffer.AddIfNotCompleted(_selectorFunc(i)), _settings);
+            forAll.RegisterOnfinished(_ => buffer.CompleteAdding());
 
-            using (var forAll = new ForAll<TSource>(_source, i => buffer.AddIfNotCompleted(_selectorFunc(i)), _settings))
+            forAll.Start();
+
+            foreach (var item in buffer.GetConsumingEnumerable())
             {
-                forAll.Completed += (sender, args) =>
-                {
-                    completionInfo = args;
-                    buffer.CompleteAdding();
-                };
+                if (_settings.Cancellation.IsCanceled)
+                    break;
 
-                forAll.Start();
-
-                TResult item;
-                while (buffer.TakeOrTryWait(out item))
-                {
-                    yield return item;
-                }
+                yield return item;
             }
-
-            if (completionInfo.Error != null)
-                CrossThreadTransferredException.Rethrow(completionInfo.Error);
-
-            _settings.Cancellation.ThrowExceptionIfCancelled();
+            
+            forAll.Wait();
         }
 
         IEnumerator IEnumerable.GetEnumerator()

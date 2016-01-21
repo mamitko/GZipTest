@@ -1,113 +1,54 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading;
-using GZipTest.Threading;
 
 namespace GZipTest.Parallelizing
 {
     /// <summary>
-    /// Executes an action on IEnumerable set of items of some same type. Trys to do it parallely.
+    /// Executes an action for each item of IEnumerable attempting to do it parallely.
     /// </summary>
-    internal class ForAll<T> : IDisposable
+    internal class ForAll<T>: ParallelWorkerBase
     {
-        private readonly ParallelSettings _settings;
-
-        private readonly Action<T> _action;
         private readonly IEnumerable<T> _source;
+        private readonly Action<T> _action;
+        private Action<ForAll<T>> _onFinishedCallback;
+        
         private EnumerableThreadSafeWrapper<T> _wrappedSource;
 
-        private Exception _happenedExceptions;
-
-        private readonly BoolFlag _started = new BoolFlag();
-        private readonly BoolFlag _finished = new BoolFlag();
-        
-        private bool NothingExceptionalHapened()
+        protected override void DoWork(Cancellation cancellation, int workersTotal, int thisWorkerIndex)
         {
-            return _happenedExceptions == null && !_settings.Cancellation.IsCanceled;
-        }
+            var ws = new EnumerableThreadSafeWrapper<T>(_source); 
+            if (Interlocked.CompareExchange(ref _wrappedSource, ws, null) != null)
+                ws.Dispose();
 
-        private void OnThreadsFinished()
-        {
-            if (_finished.InterlockedCompareAssign(true, false))
-                return;
-            
-            _settings.Cancellation.Canceled -= Cancellation_Canceled;
-            DisposeSourceAdapter();
-            OnCompleted( new WorkCompleteEventArgs(_happenedExceptions, _settings.Cancellation.IsCanceled) );
-        }
-
-        private void Cancellation_Canceled(object sender, EventArgs args)
-        {
-            OnThreadsFinished();    
-        }
-
-        public ForAll(IEnumerable<T> source, Action<T> action, ParallelSettings settings = default(ParallelSettings))
-        {
-            _source = source;
-
-            _settings = settings;
-            _action = action;
-            _settings.Cancellation = _settings.Cancellation ?? Cancellation.Uncancallable;
-
-            _settings.Cancellation.Canceled += Cancellation_Canceled;
-        }
-
-        public void Start()
-        {
-            if (_started.InterlockedCompareAssign(true, false))
-                return;
-            
-            _wrappedSource = new EnumerableThreadSafeWrapper<T>(_source);
-
-            var threadCount = _settings.ForcedDegreeOfParallelizm ?? Parallelism.DefaultDegree;
-            var threadsFinished = 0;
-            
-            for (var i = 0; i < threadCount; i++)
+            T item;
+            while (!cancellation.IsCanceled && _wrappedSource.TryGetNext(out item))
             {
-                var th = new Thread(
-                    () =>
-                    {
-                        try
-                        {
-                            T item;
-                            while (NothingExceptionalHapened() && _wrappedSource.TryGetNext(out item))
-                            {
-                                _action(item);
-                            }
-                        }
-                        catch (Exception e)
-                        {
-                            Interlocked.CompareExchange(ref _happenedExceptions, e, null);
-                        }
-                        finally
-                        {
-                            if (Interlocked.Increment(ref threadsFinished) == threadCount)
-                                OnThreadsFinished();
-                        }
-                    }) 
-                    {IsBackground = true};
-            
-                th.Start();
+                _action(item);
             }
         }
-        
-        public event EventHandler<WorkCompleteEventArgs> Completed;
 
-        private void OnCompleted(WorkCompleteEventArgs e)
-        {
-            var handler = Completed;
-            if (handler != null) handler(this, e);
-        }
-
-        private void DisposeSourceAdapter()
+        protected override void OnFinished()
         {
             if (_wrappedSource != null)
                 _wrappedSource.Dispose();
+
+            if (_onFinishedCallback != null)
+                _onFinishedCallback(this);
         }
 
-        public void Dispose()
+        public void RegisterOnfinished(Action<ForAll<T>> onFinishedCallback)
         {
-            DisposeSourceAdapter();
+            if (IsFinished)
+                onFinishedCallback(this);
+            else
+                _onFinishedCallback += onFinishedCallback;
+        }
+        
+        public ForAll(IEnumerable<T> source, Action<T> action, ParallelSettings settings = default(ParallelSettings)): base(settings)
+        {
+            _source = source;
+            _action = action;
         }
     }
 }

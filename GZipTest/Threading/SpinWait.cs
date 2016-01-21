@@ -6,7 +6,7 @@ using System.Threading;
 namespace GZipTest.Threading
 {
     struct SpinWaitStolen
-    // Сopypasted from FCL (BCL?) source code a little bit less than completly
+    // Сopypasted from FCL source code just a little bit less than completly
     {
         [DllImport("kernel32.dll"), HostProtection(SecurityAction.LinkDemand, ExternalThreading = true)]
         static extern bool SwitchToThread();

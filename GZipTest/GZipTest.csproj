@@ -46,6 +46,7 @@
   <ItemGroup>
     <Compile Include="Compression_Chunk.cs" />
     <Compile Include="Parallelizing\BlockingQueue.cs" />
+    <Compile Include="Parallelizing\ParallelWorkerBase.cs" />
     <Compile Include="Threading\BoolFlag.cs" />
     <Compile Include="Parallelizing\Cancellation.cs" />
     <Compile Include="Parallelizing\EnumerableThreadSafeWrapper.cs" />
@@ -57,7 +58,6 @@
     <Compile Include="Parallelizing\ParallelSettings.cs" />
     <Compile Include="Threading\ReferenceBool.cs" />
     <Compile Include="Compression.cs" />
-    <Compile Include="Parallelizing\WorkCompleteEventArgs.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="StreamExtension.cs" />
