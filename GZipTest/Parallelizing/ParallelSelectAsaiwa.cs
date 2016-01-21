@@ -20,7 +20,7 @@ namespace GZipTest.Parallelizing
             var threadesFinished = 0;
             foreach (var source in enumerables)
             {
-                var capturedSource = source; // for C# 4.0 (and earlier). They use the same "instance" of loop varable for all iterations (Language Specification C#4.0 section 8.8.4)
+                var capturedSource = source; // for C# 4.0 (and earlier). It uses the same "instance" of loop varable for all iterations (Language Specification C#4.0 section 8.8.4)
                 var worker = new Thread(() =>
                 {
                     try
@@ -65,7 +65,7 @@ namespace GZipTest.Parallelizing
 
             var inputBuffer = StartSelecting(() => Interlocked.Exchange(ref source, null), _ => _, onException, canceller, 1);
             var outputBuffer = StartSelecting(inputBuffer.GetConsumingEnumerable, selector, onException, canceller);
-
+            
             foreach (var processed in outputBuffer.GetConsumingEnumerable())
             {
                 if (firstException != null)

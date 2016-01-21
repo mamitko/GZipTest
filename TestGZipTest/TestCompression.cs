@@ -75,7 +75,7 @@ namespace TestGZipTest
                 });
                 thread.Start();
 
-                compression.Compress(almostEndlessStream, dst);
+                compression.CompressAsaiwa(almostEndlessStream, dst);
             }
         }
     }

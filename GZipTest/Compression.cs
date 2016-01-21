@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Threading;
 using GZipTest.Parallelizing;
 
 namespace GZipTest
@@ -33,7 +34,7 @@ namespace GZipTest
             _cancellation = new Cancellation();
 
             var decompressed = CompressedPortion.ReadAllFrom(src)
-                .Buffered(_cancellation, PrereadBufferSizePcs) // This line is optional but for certain reasons it increses CPU utilisation.
+                .Buffered(_cancellation, PrereadBufferSizePcs) // This line is optional but for certain reasons it increses CPU utilization.
                 .SelectParallely(chunk => chunk.Decompress(), _cancellation)
                 .WithBoundedOutputCapacity(OutputBufferSizePcs); // This line prevents OutOfMemmoryException on large files or with slow output disk storages.
 
@@ -55,6 +56,7 @@ namespace GZipTest
             foreach (var chunk in compressed)
             {
                 chunk.WriteCompressedTo(dst);
+                OnProgressChanged();
             }
         }
 
@@ -68,6 +70,7 @@ namespace GZipTest
             foreach (var portion in decompressed)
             {
                 portion.WriteToItsPlace(dst);
+                OnProgressChanged();
             }
         }
 
