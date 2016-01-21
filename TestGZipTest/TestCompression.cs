@@ -17,7 +17,7 @@ namespace TestGZipTest
             {
                 using (var dst = new MemoryStream())
                 {
-                    new Compression().Compress(src, dst);
+                    new Compression().CompressAsaiwa(src, dst);
                     return dst.ToArray();
                 }
             }
@@ -29,7 +29,7 @@ namespace TestGZipTest
             {
                 using (var dst = new MemoryStream())
                 {
-                    new Compression().Decompress(src, dst);
+                    new Compression().DecompressAsaiwa(src, dst);
                     return dst.ToArray();
                 }
             }

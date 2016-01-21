@@ -3,7 +3,7 @@ using System.Threading;
 
 namespace GZipTest.Threading
 {
-    //todo insert Thread.MemoryBarier invocations
+    //todo? insert Thread.MemoryBarier invocations
 
     public class MonitorSimple: IDisposable
     {

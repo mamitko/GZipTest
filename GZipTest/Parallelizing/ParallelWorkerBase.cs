@@ -74,7 +74,7 @@ namespace GZipTest.Parallelizing
             //https://msdn.microsoft.com/en-us/library/system.componentmodel.asynccompletedeventargs.error(v=vs.110).aspx
             //The value of the Error property is null if the operation was canceled.
 
-            _settings.Cancellation.ThrowExceptionIfCancelled();
+            _settings.Cancellation.ThrowIfCancelled();
         }
 
         protected bool IsFinished { get { return _finished; } }

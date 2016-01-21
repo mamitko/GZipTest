@@ -43,10 +43,10 @@ namespace GZipTest
                         switch (mode)
                         {
                             case CompressionMode.Compress:
-                                compression.Compress(srcFile, dstFile);
+                                compression.CompressAsaiwa(srcFile, dstFile);
                                 break;
                             case CompressionMode.Decompress:
-                                compression.Decompress(srcFile, dstFile);
+                                compression.DecompressAsaiwa(srcFile, dstFile);
                                 break;
                         }
                     }

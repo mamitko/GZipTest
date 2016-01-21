@@ -35,7 +35,7 @@ namespace GZipTest.Parallelizing
 
         public bool IsCanceled { get { return _isCanceled; } }
         
-        public void ThrowExceptionIfCancelled()
+        public void ThrowIfCancelled()
         {
             if (_isCanceled)
             {

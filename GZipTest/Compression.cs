@@ -41,6 +41,33 @@ namespace GZipTest
             }
         }
 
+        // As Short As I Was Able
+        public void CompressAsaiwa(Stream src, Stream dst)
+        {
+            _cancellation = new Cancellation();
+
+            var compressed = StreamPortion.SplitStream(src, PortionLengthBytes)
+                .SelectParallellyAsaiwa(portion => CompressedPortion.Compress(portion), _cancellation);
+
+            foreach (var chunk in compressed)
+            {
+                chunk.WriteCompressedTo(dst);
+            }
+        }
+
+        public void DecompressAsaiwa(Stream src, Stream dst)
+        {
+            _cancellation = new Cancellation();
+
+            var decompressed = CompressedPortion.ReadAllFrom(src)
+                .SelectParallellyAsaiwa(chunk => chunk.Decompress(), _cancellation);
+
+            foreach (var portion in decompressed)
+            {
+                portion.WriteToItsPlace(dst);
+            }
+        }
+
         public void Cancel()
         {
             if (_cancellation == null) 

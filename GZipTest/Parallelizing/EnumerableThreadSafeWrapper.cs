@@ -6,11 +6,13 @@ using GZipTest.Threading;
 namespace GZipTest.Parallelizing
 {
     internal class EnumerableThreadSafeWrapper<T> : IDisposable
+    // идея так себе:
+    //  - из обычного enumerable эффективнее читать одним потоком в буффер;
+    //  - между многопоточными источниками-приемниками это будет "узким местом"
     {
         //todo? run dispose from finalizer?? 
 
         private readonly IEnumerable<T> _source;
-        
         private readonly MonitorSimple _sourceLock = new MonitorSimple();
 
         private IEnumerator<T> _sourceEnumerator;
