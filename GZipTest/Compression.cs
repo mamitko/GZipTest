@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using GZipTest.Parallelizing;
 
 namespace GZipTest
@@ -23,6 +24,7 @@ namespace GZipTest
             foreach (var chunk in compressed)
             {
                 chunk.WriteCompressedTo(dst);
+                OnProgressChanged();
             }
         }
 
@@ -38,6 +40,7 @@ namespace GZipTest
             foreach (var portion in decompressed)
             {
                 portion.WriteToItsPlace(dst);
+                OnProgressChanged();
             }
         }
 
@@ -74,6 +77,13 @@ namespace GZipTest
                 return;
 
             _cancellation.Cancel();
+        }
+
+        public event EventHandler ProgressChanged;
+
+        protected virtual void OnProgressChanged()
+        {
+            ProgressChanged?.Invoke(this, EventArgs.Empty);
         }
     }
 }
