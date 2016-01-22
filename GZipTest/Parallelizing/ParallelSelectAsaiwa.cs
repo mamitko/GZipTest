@@ -15,12 +15,12 @@ namespace GZipTest.Parallelizing
             var workersCountDesired = Math.Max(1, threadCount > 0 ? threadCount : Environment.ProcessorCount);
             var enumerables = Enumerable.Range(0, workersCountDesired).Select(_ => getSource()).Where(srs => srs != null).ToArray();
 
-            var outputBuffer = new BlockingQueue<TDestination>(enumerables.Length);
+            var outputBuffer = new BlockingQueue<TDestination>(enumerables.Length * 4);
 
             var threadesFinished = 0;
             foreach (var source in enumerables)
             {
-                var capturedSource = source; // for C# 4.0 (and earlier). It uses the same "instance" of loop varable for all iterations (Language Specification C#4.0 section 8.8.4)
+                var capturedSource = source; // for C# 4.0 and earlier. Old compliers uses the same "instance" of loop varable for all iterations (Language Specification C#4.0 section 8.8.4)
                 var worker = new Thread(() =>
                 {
                     try
