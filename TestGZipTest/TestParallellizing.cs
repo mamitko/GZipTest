@@ -161,6 +161,41 @@ namespace TestGZipTest
             // For details please see EnumerableThreadSafeWrapper<T>.TryGetNext() implementation
         }
 
+        [TestMethod]
+        public void TestBlockingQueueStress()
+        {
+            var queue = new BlockingQueue<int>(1);
+
+            var rnd = new ThreadLocal<Random>(() => new Random());
+            var generatedTotal = 0;
+            var consummedTotal = 0;
+
+            var producers = TestMonitorSimple.RunSimultanously(5, () =>
+            {
+                for (var i = 0; i < 1e6; i++)
+                {
+                    var value = rnd.Value.Next(100);
+                    Interlocked.Add(ref generatedTotal, value);
+                    queue.AddIfNotCompleted(value);
+                }
+            }, false);
+
+            var consumers = TestMonitorSimple.RunSimultanously(5, () =>
+            {
+                foreach (var value in queue.GetConsumingEnumerable())
+                {
+                    Interlocked.Add(ref consummedTotal, value);
+                }
+            }, false);
+
+            producers.ForEach(t => t.Join());
+            queue.CompleteAdding();
+
+            consumers.ForEach(t => t.Join());
+
+            Assert.IsTrue(consummedTotal == generatedTotal);
+        }
+
         private static IEnumerable<int> StuckDownEnumerable(WaitHandle stickWhileEvent)
         {
             yield return 1;

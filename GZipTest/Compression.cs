@@ -51,7 +51,7 @@ namespace GZipTest
             _cancellation = new Cancellation();
 
             var compressed = StreamPortion.SplitStream(src, PortionLengthBytes)
-                .SelectParallellyAsaiwa(portion => CompressedPortion.Compress(portion), _cancellation);
+                .SelectParallellyAsaiwa(portion => CompressedPortion.Compress(portion), _cancellation, PrereadBufferSizePcs, OutputBufferSizePcs);
 
             foreach (var chunk in compressed)
             {
@@ -65,7 +65,7 @@ namespace GZipTest
             _cancellation = new Cancellation();
 
             var decompressed = CompressedPortion.ReadAllFrom(src)
-                .SelectParallellyAsaiwa(chunk => chunk.Decompress(), _cancellation);
+                .SelectParallellyAsaiwa(chunk => chunk.Decompress(), _cancellation, PrereadBufferSizePcs, OutputBufferSizePcs);
 
             foreach (var portion in decompressed)
             {

@@ -8,14 +8,15 @@ namespace GZipTest.Parallelizing
     public static class ParallelSelectAsaiwa // As Short As I Was Able
     {
         private static BlockingQueue<TDestination> StartSelecting<TSource, TDestination>(
-            Func<IEnumerable<TSource>> getSource, Func<TSource, TDestination> selector, Action<Exception> onFirstExceptionCallback, Cancellation canceller, int threadCount = -1)
+            Func<IEnumerable<TSource>> getSource, Func<TSource, TDestination> selector, Action<Exception> onFirstExceptionCallback, Cancellation canceller, 
+            int threadDesired, int bufferCapcity = -1)
         {
             Exception firstException = null;
 
-            var workersCountDesired = Math.Max(1, threadCount > 0 ? threadCount : Environment.ProcessorCount);
+            var workersCountDesired = Math.Max(1, threadDesired > 0 ? threadDesired : Environment.ProcessorCount);
             var enumerables = Enumerable.Range(0, workersCountDesired).Select(_ => getSource()).Where(srs => srs != null).ToArray();
 
-            var outputBuffer = new BlockingQueue<TDestination>(enumerables.Length * 4);
+            var outputBuffer = new BlockingQueue<TDestination>(bufferCapcity);
 
             var threadesFinished = 0;
             foreach (var source in enumerables)
@@ -57,14 +58,16 @@ namespace GZipTest.Parallelizing
         }
 
         public static IEnumerable<TDestination> SelectParallellyAsaiwa<TSource, TDestination>(
-            this IEnumerable<TSource> source, Func<TSource, TDestination> selector, Cancellation canceller = null)
+            this IEnumerable<TSource> source, Func<TSource, TDestination> selector, Cancellation canceller = null, 
+            int prefetchBufferCapacity = -1, int outputBufferCapcity = -1)
         {
             canceller = canceller ?? Cancellation.Uncancallable;
             Exception firstException = null;
             Action<Exception> onException = e => Interlocked.CompareExchange(ref firstException, e, null);
 
-            var inputBuffer = StartSelecting(() => Interlocked.Exchange(ref source, null), _ => _, onException, canceller, 1);
-            var outputBuffer = StartSelecting(inputBuffer.GetConsumingEnumerable, selector, onException, canceller);
+            var inputBuffer = StartSelecting(() => Interlocked.Exchange(ref source, null), _ => _, onException, canceller, 1, prefetchBufferCapacity);
+            var outputBuffer = StartSelecting(inputBuffer.GetConsumingEnumerable, selector, onException, canceller, 
+                Parallelism.DefaultDegree, outputBufferCapcity);
             
             foreach (var processed in outputBuffer.GetConsumingEnumerable())
             {

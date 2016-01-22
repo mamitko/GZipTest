@@ -44,16 +44,19 @@ namespace GZipTest
                         switch (mode)
                         {
                             case CompressionMode.Compress:
-                                compression.CompressAsaiwa(srcFile, dstFile);
-                                //compression.Compress(srcFile, dstFile);
+                                //compression.CompressAsaiwa(srcFile, dstFile);
+                                compression.Compress(srcFile, dstFile);
                                 break;
                             case CompressionMode.Decompress:
-                                compression.DecompressAsaiwa(srcFile, dstFile);
-                                //compression.Decompress(srcFile, dstFile);
+                                //compression.DecompressAsaiwa(srcFile, dstFile);
+                                compression.Decompress(srcFile, dstFile);
                                 break;
                         }
                     }
                 }
+
+                Console.WriteLine();
+                Console.WriteLine("\nDone.");
             }
             catch (Exception e)
             {

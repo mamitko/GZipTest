@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Threading;
 using GZipTest.Threading;
 
 namespace GZipTest.Parallelizing
@@ -87,7 +88,7 @@ namespace GZipTest.Parallelizing
                 }
 
                 item = _queue.Dequeue();
-                _sync.Pulse();
+                _sync.PulseAll();
                 return true;
             }
         }
