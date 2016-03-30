@@ -113,7 +113,7 @@ namespace TestGZipTest
         }
 
         [TestMethod]
-        public void TestEnumerableAsyncWrapper()
+        public void TestEnumerableThreadSafeWrapper()
         {
             var stickWhileEvent = new ManualResetEvent(false);
             var enumerator = new DisposableEnumerator<int>(StuckDownEnumerable(stickWhileEvent));
@@ -140,15 +140,12 @@ namespace TestGZipTest
             Assert.AreEqual(1, result[0]);
             
             wrapper.Dispose();
-
-            //int item;
-            //AssertThrows<ObjectDisposedException>(() => wrapper.TryGetNext(out item)); 
-            // This line was commented for sertain reasons. 
-            // For details please see EnumerableThreadSafeWrapper<T>.TryGetNext() implementation
-
             // Source Enumerator is stuck down but Dispose returns immediately 
             // and real disposal is schedulled on the ending of last TryGetNex()
 
+            int item;
+            AssertEx.Throws<ObjectDisposedException>(() => wrapper.TryGetNext(out item)); 
+            
             stickWhileEvent.Set();
             Thread.Sleep(100);
             
@@ -156,9 +153,7 @@ namespace TestGZipTest
             Assert.AreEqual(2, result.Count);
             Assert.AreEqual(2, result[1]);
 
-            //AssertThrows<ObjectDisposedException>(() => wrapper.TryGetNext(out item));
-            // This line was commented for sertain reasons. 
-            // For details please see EnumerableThreadSafeWrapper<T>.TryGetNext() implementation
+            AssertEx.Throws<ObjectDisposedException>(() => wrapper.TryGetNext(out item));
         }
 
         [TestMethod]

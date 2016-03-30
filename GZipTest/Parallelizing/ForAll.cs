@@ -17,9 +17,12 @@ namespace GZipTest.Parallelizing
 
         protected override void DoWork(Cancellation cancellation, int workersTotal, int thisWorkerIndex)
         {
-            var ws = new EnumerableThreadSafeWrapper<T>(_source); 
-            if (Interlocked.CompareExchange(ref _wrappedSource, ws, null) != null)
-                ws.Dispose();
+            if (_wrappedSource == null)
+            {
+                var ws = new EnumerableThreadSafeWrapper<T>(_source);
+                if (Interlocked.CompareExchange(ref _wrappedSource, ws, null) != null)
+                    ws.Dispose();
+            }
 
             T item;
             while (!cancellation.IsCanceled && _wrappedSource.TryGetNext(out item))
@@ -28,13 +31,16 @@ namespace GZipTest.Parallelizing
             }
         }
 
-        protected override void OnFinished()
+        protected override void OnCompleteOrCancelled()
+        {
+            if (_onFinishedCallback != null)
+                _onFinishedCallback(this);
+        }
+
+        protected override void OnLastWorkerFinishing()
         {
             if (_wrappedSource != null)
                 _wrappedSource.Dispose();
-
-            if (_onFinishedCallback != null)
-                _onFinishedCallback(this);
         }
 
         public void RegisterOnfinished(Action<ForAll<T>> onFinishedCallback)
@@ -45,7 +51,8 @@ namespace GZipTest.Parallelizing
                 _onFinishedCallback += onFinishedCallback;
         }
         
-        public ForAll(IEnumerable<T> source, Action<T> action, ParallelSettings settings = default(ParallelSettings)): base(settings)
+        public ForAll(IEnumerable<T> source, Action<T> action, ParallelSettings settings = default(ParallelSettings))
+            : base(settings)
         {
             _source = source;
             _action = action;

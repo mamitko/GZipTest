@@ -44,19 +44,19 @@ namespace GZipTest
                         switch (mode)
                         {
                             case CompressionMode.Compress:
-                                //compression.CompressAsaiwa(srcFile, dstFile);
-                                compression.Compress(srcFile, dstFile);
+                                compression.CompressAsaiwa(srcFile, dstFile);
+                                //compression.Compress(srcFile, dstFile);
                                 break;
                             case CompressionMode.Decompress:
-                                //compression.DecompressAsaiwa(srcFile, dstFile);
-                                compression.Decompress(srcFile, dstFile);
+                                compression.DecompressAsaiwa(srcFile, dstFile);
+                                //compression.Decompress(srcFile, dstFile);
                                 break;
                         }
                     }
                 }
 
                 Console.WriteLine();
-                Console.WriteLine("\nDone.");
+                Console.WriteLine("Done: "+ dstFileName);
             }
             catch (Exception e)
             {
@@ -80,9 +80,9 @@ namespace GZipTest
             return SuccessAppExitCode;
         }
 
-        private static string WriteErrorLog(Exception error, string dstDataFileName)
+        private static string WriteErrorLog(Exception error, string compressionDestinationFileName)
         {
-            var errorLogFile = Path.ChangeExtension(dstDataFileName, "errorLog.txt");
+            var errorLogFile = Path.ChangeExtension(compressionDestinationFileName, "errorLog.txt");
             File.WriteAllText(errorLogFile, error.ToString());
             return errorLogFile;
         }

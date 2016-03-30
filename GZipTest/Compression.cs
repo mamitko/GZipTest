@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using System.Threading;
 using GZipTest.Parallelizing;
 
 namespace GZipTest
@@ -12,6 +11,8 @@ namespace GZipTest
         private static int PrereadBufferSizePcs { get { return Parallelism.DefaultDegree; } }
         
         private Cancellation _cancellation;
+        
+        // Тут две реализации (две пары методов Compress-Decompress): подлиннее и покороче
         
         public void Compress(Stream src, Stream dst)
         {
@@ -46,6 +47,7 @@ namespace GZipTest
         }
 
         // As Short As I Was Able
+
         public void CompressAsaiwa(Stream src, Stream dst)
         {
             _cancellation = new Cancellation();
@@ -84,7 +86,7 @@ namespace GZipTest
 
         public event EventHandler ProgressChanged;
 
-        protected virtual void OnProgressChanged()
+        private void OnProgressChanged()
         {
             ProgressChanged?.Invoke(this, EventArgs.Empty);
         }

@@ -10,8 +10,6 @@ namespace GZipTest.Parallelizing
     //  - из обычного enumerable эффективнее читать одним потоком в буффер;
     //  - между многопоточными источниками-приемниками это будет "узким местом"
     {
-        //todo? run dispose from finalizer?? 
-
         private readonly IEnumerable<T> _source;
         private readonly MonitorSimple _sourceLock = new MonitorSimple();
 
@@ -24,19 +22,11 @@ namespace GZipTest.Parallelizing
             _source = source;
         }
         
-        //todo все-таки перекроить. Dispose не должен влиять на поведение. Отмену сделать через нормальную отмену.
         public bool TryGetNext(out T item)
         {
-            // if (_disposeReqeusted)
-            //    throw new ObjectDisposedException(ToString());
-            // Think it's not good idea to throw ObjectDisposedException here since hypothetically TryGetNext can be invoked, and then "paused" "before" even started.
-            // At the same time Dispose can be invoked at another thread (e.g. in case of cancelling some operation). This will cause exception on seems to be a legal TryGetNext() invocation.
+            if (_disposeReqeusted)
+                throw new ObjectDisposedException(ToString());
             
-            // Asume normaly Dispose is not supposed be invoked before "last" TryGetNext() returns.
-            // If it is, let's treat it as cancelation, as in general, cancellation seems to be the only way it could happened;
-            
-            // In other words noone will knownly dispose an object before getting everything he/she wants from it.
-
             item = default(T);
             if (_disposeReqeusted)
                 return false;
@@ -83,7 +73,6 @@ namespace GZipTest.Parallelizing
             // Real disposal will be done on the end of last TryGetNext()
             if (!_sourceLock.TryEnter())
                 return;
-
             try
             {
                 DisposeInternals();

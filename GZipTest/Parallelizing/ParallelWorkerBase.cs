@@ -55,7 +55,10 @@ namespace GZipTest.Parallelizing
                         finally
                         {
                             if (Interlocked.Increment(ref threadsFinished) == threadCount)
+                            {
+                                OnLastWorkerFinishing();
                                 Finish();
+                            }
                         }
                     })
                 { IsBackground = true };
@@ -81,7 +84,9 @@ namespace GZipTest.Parallelizing
 
         protected virtual void DoWork(Cancellation cancellation, int workersTotal, int thisWorkerIndex) {}
 
-        protected virtual void OnFinished() { }
+        protected virtual void OnCompleteOrCancelled() { }
+
+        protected virtual void OnLastWorkerFinishing() { }
 
         private void Cancellation_Canceled()
         {
@@ -95,7 +100,7 @@ namespace GZipTest.Parallelizing
 
             IsCancelled = _settings.Cancellation.IsCanceled;
             
-            OnFinished();
+            OnCompleteOrCancelled();
 
             _finishedEvent.Set();
         }
