@@ -12,7 +12,7 @@ namespace GZipTest.Threading
         static extern bool SwitchToThread();
 
         private static readonly bool IsSingleProcessor = Environment.ProcessorCount == 1;
-        // Author assumed that singlecore hyperthreading CPUs are quite rare so the number of logical cores will fit the needs.
+        // Author assumes that singlecore hyperthreading CPUs are quite rare so the number of logical cores will fit the needs.
         // Think it works for virtual machines too.
 
         private int _spinsOnceDone;
