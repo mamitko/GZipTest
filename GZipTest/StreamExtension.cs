@@ -40,8 +40,7 @@ namespace GZipTest
             } while (bytesRead > 0);
         }
 
-        public static long CopyAmountTo(this Stream src, Stream dst, long bytesToCopy)
-        // тактое странное название, а не просто CopyTo, потому что в Fw 4.0+ второй параметр Stream.CopyTo -- размер буфера
+        public static long CopyBytesTo(this Stream src, Stream dst, long bytesToCopy)
         {
             var buffer = new byte[CopyBufferSize];
             long bytesDone = 0;

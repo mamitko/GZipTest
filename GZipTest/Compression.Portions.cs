@@ -42,7 +42,7 @@ namespace GZipTest
                 var streamPosition = stream.Position;
                 using (var memStream = new MemoryStream())
                 {
-                    if (stream.CopyAmountTo(memStream, length) == 0)
+                    if (stream.CopyBytesTo(memStream, length) == 0)
                         return false;
 
                     chunk = new StreamPortion(streamPosition, memStream.ToArray());

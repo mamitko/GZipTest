@@ -44,7 +44,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Compression_Chunk.cs" />
+    <Compile Include="Compression.Portions.cs" />
     <Compile Include="Parallelizing\BlockingQueue.cs" />
     <Compile Include="Parallelizing\ParallelSelectAsaiwa.cs" />
     <Compile Include="Parallelizing\ParallelWorkerBase.cs" />

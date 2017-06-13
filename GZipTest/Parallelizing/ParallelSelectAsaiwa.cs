@@ -7,15 +7,15 @@ namespace GZipTest.Parallelizing
 {
     public static class ParallelSelectAsaiwa // As Short As I Was Able
     {
+        // Слишком запутанно для прикладного "продакшен кода", но по ряду причин, наверное, может быть приемлемо.
+
         private static BlockingQueue<TDestination> StartSelecting<TSource, TDestination>(
             Func<IEnumerable<TSource>> getSource, Func<TSource, TDestination> selector, Action<Exception> onFirstExceptionCallback, Cancellation canceller, 
             int threadsDesired, int bufferCapcity = -1)
         {
             Exception firstException = null;
-
             var workersCountDesired = Math.Max(1, threadsDesired > 0 ? threadsDesired : Environment.ProcessorCount);
             var enumerables = Enumerable.Range(0, workersCountDesired).Select(_ => getSource()).Where(srs => srs != null).ToArray();
-
             var outputBuffer = new BlockingQueue<TDestination>(bufferCapcity);
 
             var threadesFinished = 0;
@@ -65,12 +65,25 @@ namespace GZipTest.Parallelizing
             Exception firstException = null;
             Action<Exception> onException = e => Interlocked.CompareExchange(ref firstException, e, null);
 
-            var inputBuffer = StartSelecting(() => Interlocked.Exchange(ref source, null), _ => _, onException, canceller, threadsDesired: 1, bufferCapcity: prefetchBufferCapacity);
+            var inputBuffer = StartSelecting(
+                getSource: () => Interlocked.Exchange(ref source, null), 
+                selector: _ => _, 
+                onFirstExceptionCallback: onException, 
+                canceller: canceller, 
+                threadsDesired: 1, 
+                bufferCapcity: prefetchBufferCapacity);
 
-            var outputBuffer = StartSelecting(inputBuffer.GetConsumingEnumerable, selector, onException, canceller, threadsDesired: Parallelism.DefaultDegree, bufferCapcity: outputBufferCapcity);
+            var outputBuffer = StartSelecting(
+                getSource: inputBuffer.GetConsumingEnumerable, 
+                selector: selector, 
+                onFirstExceptionCallback: onException, 
+                canceller: canceller, 
+                threadsDesired: Parallelism.DefaultDegree, 
+                bufferCapcity: outputBufferCapcity);
             
             foreach (var processed in outputBuffer.GetConsumingEnumerable())
             {
+                Thread.MemoryBarrier();
                 if (firstException != null)
                     break;
 

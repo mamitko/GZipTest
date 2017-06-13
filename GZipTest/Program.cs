@@ -8,6 +8,9 @@ using System.IO.Compression;
 
 namespace GZipTest
 {
+    // Только Fw3.5 и не использовать ThreadPool
+    // Комментарии на русском, это "коментарии по ходу выполнения тестового задания", в "промышелнном" коде их бы не было.
+
     static class Program
     {
         private const int SuccessAppExitCode = 0;
@@ -21,12 +24,12 @@ namespace GZipTest
             string dstFileName;
             if (!ValidateStartupAgrs(args, out mode, out srcFileName, out dstFileName))
             {
-                Console.WriteLine("The syntax of the command params is incorrect. Showld be: (compress|decompress) Source Destination" );
+                Console.WriteLine("The syntax of the command params is incorrect. Showld be: (compress|decompress) Source Destination");
                 return ErrorAppExitCode;
             }
             
             var compression = new Compression();
-            compression.ProgressChanged += (_,__) => Console.Write("░");
+            compression.ProgressChanged += (_, __) => Console.Write("░");
 
             Console.CancelKeyPress += (sender, e) =>
             {
@@ -44,8 +47,8 @@ namespace GZipTest
                         switch (mode)
                         {
                             case CompressionMode.Compress:
-                                compression.CompressAsaiwa(srcFile, dstFile);
-                                //compression.Compress(srcFile, dstFile);
+                                //compression.CompressAsaiwa(srcFile, dstFile);
+                                compression.Compress(srcFile, dstFile);
                                 break;
                             case CompressionMode.Decompress:
                                 compression.DecompressAsaiwa(srcFile, dstFile);
@@ -68,8 +71,9 @@ namespace GZipTest
 
                 if (!(e is OperationCanceledException))
                 {
+                    Console.WriteLine(e.Message);
                     var errorLogFile = WriteErrorLog(e, dstFileName); 
-                    Console.WriteLine(e.Message + Environment.NewLine + "For details please see " + errorLogFile);
+                    Console.WriteLine("For details please see " + errorLogFile);
                     // в это место на диске можно писать (если запрет не стал причиной экспешена) и, наверное, 
                     // пользователь именно там будет искать результат, и найдет описание причины неудачи
                 }
@@ -83,7 +87,7 @@ namespace GZipTest
         private static string WriteErrorLog(Exception error, string compressionDestinationFileName)
         {
             var errorLogFile = Path.ChangeExtension(compressionDestinationFileName, "errorLog.txt");
-            File.WriteAllText(errorLogFile, error.ToString());
+            File.WriteAllText(errorLogFile ?? "null", error.ToString());
             return errorLogFile;
         }
 

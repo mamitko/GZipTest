@@ -8,7 +8,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace TestGZipTest
 {
     [TestClass]
-    public class TestForall
+    public class TestForAll
     {
         [TestMethod]
         public void TestWorksInGeneral()

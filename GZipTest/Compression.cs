@@ -19,7 +19,7 @@ namespace GZipTest
             _cancellation = new Cancellation();
 
             var compressed = StreamPortion.SplitStream(src, PortionLengthBytes)
-                .Buffered(_cancellation, PrereadBufferSizePcs) // This line is optional but for certain reasons it increses CPU utilisation.
+                .Buffered(_cancellation, PrereadBufferSizePcs) // This line is optional but for certain reasons it increases CPU utilization.
                 .SelectParallely(portion => CompressedPortion.Compress(portion), _cancellation)
                 .WithBoundedOutputCapacity(OutputBufferSizePcs); // This line prevents OutOfMemmoryException on large files or with slow output disk storages.
 
@@ -35,7 +35,7 @@ namespace GZipTest
             _cancellation = new Cancellation();
 
             var decompressed = CompressedPortion.ReadAllFrom(src)
-                .Buffered(_cancellation, PrereadBufferSizePcs) // This line is optional but for certain reasons it increses CPU utilization.
+                .Buffered(_cancellation, PrereadBufferSizePcs) // This line is optional but for certain reasons it increases CPU utilization.
                 .SelectParallely(chunk => chunk.Decompress(), _cancellation)
                 .WithBoundedOutputCapacity(OutputBufferSizePcs); // This line prevents OutOfMemmoryException on large files or with slow output disk storages.
 
