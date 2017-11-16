@@ -7,32 +7,32 @@ namespace GZipTest.Parallelizing
 {
     internal class ParallelWorkerBase
     {
-        private readonly ParallelSettings _settings;
+        private readonly ParallelSettings settings;
         
-        private readonly ManualResetEvent _finishedEvent = new ManualResetEvent(false);
+        private readonly ManualResetEvent finishedEvent = new ManualResetEvent(false);
 
-        private readonly BoolFlag _started = new BoolFlag(false);
-        private readonly BoolFlag _finished = new BoolFlag(false);
+        private readonly BoolFlag started = new BoolFlag(false);
+        private readonly BoolFlag finished = new BoolFlag(false);
 
-        private Exception _firstHappenedException;
+        private Exception firstHappenedException;
         
         protected ParallelWorkerBase(ParallelSettings settings = default(ParallelSettings))
         {
-            _settings = settings;
-            _settings.Cancellation = _settings.Cancellation ?? Cancellation.Uncancallable;
-            _settings.Cancellation.RegisterCallback(Cancellation_Canceled);
+            this.settings = settings;
+            this.settings.Cancellation = this.settings.Cancellation ?? Cancellation.Uncancallable;
+            this.settings.Cancellation.RegisterCallback(Cancellation_Canceled);
         }
 
-        public bool IsCancelled { get; private set; }
+        public bool IsCanceled { get; private set; }
         
         public void Start()
         {
-            if (_started.InterlockedCompareAssign(true, false))
+            if (started.InterlockedCompareAssign(true, false))
                 return;
 
-            var combinedCancellation = Cancellation.CreateLinked(_settings.Cancellation);
+            var combinedCancellation = Cancellation.CreateLinked(settings.Cancellation);
 
-            var threadCount = _settings.ForcedDegreeOfParallelizm ?? Parallelism.DefaultDegree;
+            var threadCount = settings.ForcedDegreeOfParallelizm ?? Parallelism.DefaultDegree;
             var threadsFinished = 0;
 
             Debug.Assert(threadCount > 0);
@@ -49,7 +49,7 @@ namespace GZipTest.Parallelizing
                         }
                         catch (Exception e)
                         {
-                            Interlocked.CompareExchange(ref _firstHappenedException, e, null);
+                            Interlocked.CompareExchange(ref firstHappenedException, e, null);
                             combinedCancellation.Cancel();
                         }
                         finally
@@ -69,22 +69,22 @@ namespace GZipTest.Parallelizing
 
         public void Wait()
         {
-            _finishedEvent.WaitOne();
+            finishedEvent.WaitOne();
 
-            if (_firstHappenedException != null)
-                CrossThreadTransferredException.Rethrow(_firstHappenedException);
+            if (firstHappenedException != null)
+                CrossThreadTransferredException.Rethrow(firstHappenedException);
 
             //https://msdn.microsoft.com/en-us/library/system.componentmodel.asynccompletedeventargs.error(v=vs.110).aspx
             //The value of the Error property is null if the operation was canceled.
 
-            _settings.Cancellation.ThrowIfCancelled();
+            settings.Cancellation.ThrowIfCancelled();
         }
 
-        protected bool IsFinished { get { return _finished; } }
+        protected bool IsFinished { get { return finished; } }
 
         protected virtual void DoWork(Cancellation cancellation, int workersTotal, int thisWorkerIndex) {}
 
-        protected virtual void OnCompleteOrCancelled() { }
+        protected virtual void OnCompleteOrCanceled() { }
 
         protected virtual void OnLastWorkerFinishing() { }
 
@@ -93,16 +93,16 @@ namespace GZipTest.Parallelizing
             Finish();
         }
         
-        private void Finish() // rename
+        private void Finish() //TODO rename
         {
-            if (_finished.InterlockedCompareAssign(true, false))
+            if (finished.InterlockedCompareAssign(true, false))
                 return;
 
-            IsCancelled = _settings.Cancellation.IsCanceled;
+            IsCanceled = settings.Cancellation.IsCanceled;
             
-            OnCompleteOrCancelled();
+            OnCompleteOrCanceled();
 
-            _finishedEvent.Set();
+            finishedEvent.Set();
         }
     }
 }

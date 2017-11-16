@@ -60,7 +60,7 @@
     <Compile Include="AssertEx.cs" />
     <Compile Include="TestForall.cs" />
     <Compile Include="TestMonitorSimple.cs" />
-    <Compile Include="TestParallellizing.cs" />
+    <Compile Include="TestParallelizing.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\GZipTest\GZipTest.csproj">

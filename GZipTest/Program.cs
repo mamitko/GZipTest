@@ -1,17 +1,17 @@
-﻿using System;
+﻿ //#define ETUDE
+
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 
-//compress "d:\downloads\The Avengers.mkv" "c:\tmp\avgs.compressed"
-//decompress "c:\tmp\avgrs.compressed"  "D:\Downloads\The Avengers decompressed.mkv" 
+// Debug command line args examples:
+// 'compress "d:\downloads\The Avengers.mkv" "c:\tmp\avgs.compressed"'
+// 'decompress "c:\tmp\avgrs.compressed" "D:\Downloads\The Avengers decompressed.mkv"'
 
 namespace GZipTest
 {
-    // Только Fw3.5 и не использовать ThreadPool
-    // Комментарии на русском, это "коментарии по ходу выполнения тестового задания", в "промышелнном" коде их бы не было.
-
-    static class Program
+    internal static class Program
     {
         private const int SuccessAppExitCode = 0;
         private const int ErrorAppExitCode = 1;
@@ -20,63 +20,69 @@ namespace GZipTest
         private static int Main(string[] args)
         {
             CompressionMode mode;
-            string srcFileName;
-            string dstFileName;
-            if (!ValidateStartupAgrs(args, out mode, out srcFileName, out dstFileName))
+            string sourceFileName;
+            string targetFileName;
+            if (!ValidateStartupAgrs(args, out mode, out sourceFileName, out targetFileName))
             {
-                Console.WriteLine("The syntax of the command params is incorrect. Showld be: (compress|decompress) Source Destination");
+                Console.WriteLine("The syntax of the command params is incorrect. Should be: (compress|decompress) Source Destination");
                 return ErrorAppExitCode;
             }
             
             var compression = new Compression();
-            compression.ProgressChanged += (_, __) => Console.Write("░");
+            compression.ProgressChanged += delegate { Console.Write("░"); };
 
             Console.CancelKeyPress += (sender, e) =>
             {
                 e.Cancel = true;
                 compression.Cancel();
-                Console.WriteLine("\nCancelling...");
+                Console.WriteLine("\nCanceling...");
             };
 
             try
             {
-                using (var srcFile = new FileStream(srcFileName, FileMode.Open, FileAccess.Read))
+                using (var sourceFile = new FileStream(sourceFileName, FileMode.Open, FileAccess.Read))
                 {
-                    using (var dstFile = new FileStream(dstFileName, FileMode.Create, FileAccess.Write))
+                    using (var targetFile = new FileStream(targetFileName, FileMode.Create, FileAccess.Write))
                     {
+
                         switch (mode)
                         {
+#if ETUDE
                             case CompressionMode.Compress:
-                                //compression.CompressAsaiwa(srcFile, dstFile);
-                                compression.Compress(srcFile, dstFile);
+                                compression.CompressEtude(sourceFile, targetFile);
                                 break;
                             case CompressionMode.Decompress:
-                                compression.DecompressAsaiwa(srcFile, dstFile);
-                                //compression.Decompress(srcFile, dstFile);
+                                compression.DecompressEtude(sourceFile, targetFile);
                                 break;
+#else
+                            case CompressionMode.Compress:
+                                compression.Compress(sourceFile, targetFile);
+                                break;
+                            case CompressionMode.Decompress:
+                                compression.Decompress(sourceFile, targetFile);
+                                break;
+#endif
+                            default:
+                                throw new ArgumentOutOfRangeException();
                         }
                     }
                 }
 
                 Console.WriteLine();
-                Console.WriteLine("Done: "+ dstFileName);
+                Console.WriteLine("Done: "+ targetFileName);
             }
             catch (Exception e)
             {
-                File.Delete(dstFileName);
-                // Не уверен, хорошая это идея или нет. 
-                // Вероятно, правильный вариант -- складывать результат во временный файл рядом, 
-                // а после удачного выполнения заменять уже существующий файл с таким имененем (если он есть) свежесозданным.
-                // В случае неудачи старый файл окажется целым.
+                File.Delete(targetFileName);
 
-                if (!(e is OperationCanceledException))
-                {
-                    Console.WriteLine(e.Message);
-                    var errorLogFile = WriteErrorLog(e, dstFileName); 
-                    Console.WriteLine("For details please see " + errorLogFile);
-                    // в это место на диске можно писать (если запрет не стал причиной экспешена) и, наверное, 
-                    // пользователь именно там будет искать результат, и найдет описание причины неудачи
-                }
+                if (e is OperationCanceledException)
+                    return ErrorAppExitCode;
+
+                Console.WriteLine(e.Message);
+
+                var errorLogFile = WriteErrorLog(e, targetFileName); 
+
+                Console.WriteLine("For details please see " + errorLogFile);
 
                 return ErrorAppExitCode;
             }

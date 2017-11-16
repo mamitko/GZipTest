@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using GZipTest.Parallelizing;
 using GZipTest.Threading;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -14,20 +13,20 @@ namespace TestGZipTest
         [TestMethod]
         public void TestEnterExitInGeneral()
         {
-            const int threadCount = 10;
-            const int iterations = 100000;
+            const int ThreadCount = 10;
+            const int Iterations = 100000;
 
             long n = 0;
 
-            var montor = new MonitorSimple();
+            var monitor = new MonitorSimple();
 
-            RunSimultanously(threadCount, () =>
+            RunSimultaneously(ThreadCount, () =>
             {
-                for (var i = 0; i < iterations; i++)
+                for (var i = 0; i < Iterations; i++)
                 {
-                    using (montor.GetLocked())
-                    using (montor.GetLocked())
-                    using (montor.GetLocked())
+                    using (monitor.GetLocked())
+                    using (monitor.GetLocked())
+                    using (monitor.GetLocked())
                     {
                         n = n + 1;
                         if (i % 100 == 0)
@@ -36,23 +35,23 @@ namespace TestGZipTest
                 }
             }, true);
 
-            var expected = Enumerable.Repeat(1, iterations).Sum() * threadCount;
+            var expected = Enumerable.Repeat(1, Iterations).Sum() * ThreadCount;
             Assert.AreEqual(expected, n);
         }
 
         [TestMethod]
         public void TestStressLockedSectionsDoNotOverlapp()
         {
-            const int iterations = 100000;
+            const int Iterations = 100000;
 
             var entered = 0;
             var overlapped = false;
 
             var m = new MonitorSimple();
 
-            RunSimultanously(5, () =>
+            RunSimultaneously(5, () =>
             {
-                for (var i = 0; i < iterations; i++)
+                for (var i = 0; i < Iterations; i++)
                 {
                     using (m.GetLocked())
                     using (m.GetLocked())
@@ -89,28 +88,28 @@ namespace TestGZipTest
                 m.Wait();
                 testValue = 2;
                 m.Exit();
-            }) { Name = "th1" };
+            }) { Name = "Thread 1" };
 
             var th2 = new Thread(() =>
             {
                 m.Enter();
                 testValue = 100;
                 m.Exit();
-            }) { Name = "th2" };
+            }) { Name = "Thread 2" };
 
             th1.Start();
 
-            WaitAlittle();
+            WaitALittle();
 
             th2.Start();
 
-            WaitAlittle();
+            WaitALittle();
 
             Assert.AreEqual(1, testValue);
 
             e.Set();
 
-            WaitAlittle();
+            WaitALittle();
 
             Assert.AreEqual(100, testValue);
 
@@ -118,7 +117,7 @@ namespace TestGZipTest
             m.PulseAll();
             m.Exit();
 
-            WaitAlittle();
+            WaitALittle();
 
             Assert.AreEqual(2, testValue);
         }
@@ -126,8 +125,9 @@ namespace TestGZipTest
         [TestMethod]
         public void TestStressWait()
         {
-            const int iterations = 1000000;
-            const int doHardWorkBeforeEachNthProducing = iterations / 100;
+            const int Iterations = 1000000;
+            const int DoHardWorkBeforeEachNthProducing = Iterations / 100;
+
             var threadCount = Environment.ProcessorCount;
 
             var src = 0;
@@ -136,7 +136,7 @@ namespace TestGZipTest
 
             var m = new MonitorSimple();
 
-            var readers = RunSimultanously(threadCount, () =>
+            var readers = RunSimultaneously(threadCount, () =>
             {
                 while (true)
                 {
@@ -156,19 +156,20 @@ namespace TestGZipTest
                 }
             }, false);
 
-            RunSimultanously(threadCount, () =>
+            RunSimultaneously(threadCount, () =>
             {
-                for (var i = 0; i < iterations; i++)
+                for (var i = 0; i < Iterations; i++)
                 {
-                    if (i % doHardWorkBeforeEachNthProducing == 0)
+                    if (i % DoHardWorkBeforeEachNthProducing == 0)
                         DoHardWork();
 
                     using (m.GetLocked())
-                    using (m.GetLocked()) //for extra stressing
+                    using (m.GetLocked()) 
+                    // nested locks for extra stressing
                     {
                         src = src + 1;
 
-                        // such a weird construct is for extra stressing
+                        // for extra stressing
                         if (i % 2 == 0)
                             m.Pulse();
                         else
@@ -185,7 +186,7 @@ namespace TestGZipTest
 
             readers.ForEach(r => r.Join());
 
-            var expected = Enumerable.Repeat(1, iterations).Sum() * threadCount;
+            var expected = Enumerable.Repeat(1, Iterations).Sum() * threadCount;
 
             Assert.AreEqual(expected, dst);
         }
@@ -205,7 +206,7 @@ namespace TestGZipTest
 
             th.Start();
 
-            WaitAlittle();
+            WaitALittle();
 
             AssertEx.Throws<SynchronizationLockException>(() => monitor.Exit());
 
@@ -228,7 +229,7 @@ namespace TestGZipTest
                 while (finished == 0) { }
             }) { IsBackground = true };
             th.Start();
-            WaitAlittle();
+            WaitALittle();
 
             // other thread has lock
             AssertEx.Throws<SynchronizationLockException>(() => { monitor.Wait(); });
@@ -238,7 +239,7 @@ namespace TestGZipTest
             Thread.VolatileWrite(ref finished, 1);
         }
         
-        public static List<Thread> RunSimultanously(int threadCount, Action action, bool waitUntilFinished)
+        public static List<Thread> RunSimultaneously(int threadCount, Action action, bool waitUntilFinished)
         {
             var threads = Enumerable.Repeat(0, threadCount).Select(
                 i => new Thread(() => action()) { IsBackground = true }).ToList();
@@ -251,7 +252,7 @@ namespace TestGZipTest
             return threads;
         }
 
-        public static void WaitAlittle()
+        public static void WaitALittle()
         {
             Thread.Sleep(50);
         }

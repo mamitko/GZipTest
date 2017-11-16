@@ -6,28 +6,28 @@ using System.Threading;
 namespace GZipTest.Threading
 {
     struct SpinWaitStolen
-    // Сopypasted from FCL source code just a little bit less than completly
+    // Сopypasted from FCL source code just a little bit less than completely
     {
         [DllImport("kernel32.dll"), HostProtection(SecurityAction.LinkDemand, ExternalThreading = true)]
-        static extern bool SwitchToThread();
+        private static extern bool SwitchToThread();
 
-        private static readonly bool IsSingleProcessor = Environment.ProcessorCount == 1;
-        // Author assumes that singlecore hyperthreading CPUs are quite rare so the number of logical cores will fit the needs.
+        private static bool IsSingleProcessor => Environment.ProcessorCount == 1;
+        // Author assumes that single-core hyper-threading CPUs are quite rare so the number of logical cores will fit the needs.
         // Think it works for virtual machines too.
 
-        private int _spinsOnceDone;
+        private int spinsOnceDone;
         
         public void SpinOnce()
         {
-            const int trueSpinsBeforeYeild = 10;
+            const int TrueSpinsBeforeYield = 10;
 
-            if (_spinsOnceDone < trueSpinsBeforeYeild && !IsSingleProcessor)
+            if (spinsOnceDone < TrueSpinsBeforeYield && !IsSingleProcessor)
             {
-                Thread.SpinWait(4 << _spinsOnceDone);
+                Thread.SpinWait(4 << spinsOnceDone);
             }
             else
             {
-                var spinsAfterTrueSpins = _spinsOnceDone >= trueSpinsBeforeYeild ? trueSpinsBeforeYeild - 10 : _spinsOnceDone;
+                var spinsAfterTrueSpins = spinsOnceDone >= TrueSpinsBeforeYield ? TrueSpinsBeforeYield - 10 : spinsOnceDone;
 
                 if (spinsAfterTrueSpins % 20 == 19)
                 {
@@ -46,14 +46,14 @@ namespace GZipTest.Threading
                 }
             }
             
-            _spinsOnceDone = _spinsOnceDone < int.MaxValue ? _spinsOnceDone + 1 : trueSpinsBeforeYeild;
+            spinsOnceDone = spinsOnceDone < int.MaxValue ? spinsOnceDone + 1 : TrueSpinsBeforeYield;
         }
 
         // from FCL source code:
         // We prefer to call Thread.Yield first, triggering a SwitchToThread. This
         // unfortunately doesn't consider all runnable threads on all OS SKUs. In
         // some cases, it may only consult the runnable threads whose ideal processor
-        // is the one currently executing code. Thus we oc----ionally issue a call to
+        // is the one currently executing code. Thus we occasionally issue a call to
         // Sleep(0), which considers all runnable threads at equal priority. Even this
         // is insufficient since we may be spin waiting for lower priority threads to
         // execute; we therefore must call Sleep(1) once in a while too, which considers

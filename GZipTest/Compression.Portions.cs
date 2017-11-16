@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
-using System.Threading;
 
 namespace GZipTest
 {
@@ -9,12 +8,12 @@ namespace GZipTest
     {
         private class StreamPortion
         {
-            public long StartPostion { get; private set; }
-            public byte[] Data { get; private set; }
+            public long StartPosition { get; }
+            public byte[] Data { get; }
 
-            public StreamPortion(long startPostion, byte[] data)
+            public StreamPortion(long startPosition, byte[] data)
             {
-                StartPostion = startPostion;
+                StartPosition = startPosition;
                 Data = data;
             }
 
@@ -27,12 +26,12 @@ namespace GZipTest
                 }
             }
             
-            public void WriteToItsPlace(Stream stream)
+            public void WriteAtItsPlace(Stream stream)
             {
-                if (StartPostion + Data.Length > stream.Length)
-                    stream.SetLength(StartPostion + Data.Length);
+                if (StartPosition + Data.Length > stream.Length)
+                    stream.SetLength(StartPosition + Data.Length);
 
-                stream.Position = StartPostion;
+                stream.Position = StartPosition;
                 stream.Write(Data, 0, Data.Length);
             }
 
@@ -53,13 +52,13 @@ namespace GZipTest
 
         private class CompressedPortion
         {
-            private readonly long _originalStartPostion;
-            private readonly byte[] _zippedData;
+            private readonly long originalStartPosition;
+            private readonly byte[] compressedData;
 
-            private CompressedPortion(long originalStartPostion, byte[] zippedData)
+            private CompressedPortion(long originalStartPosition, byte[] compressedData)
             {
-                _originalStartPostion = originalStartPostion;
-                _zippedData = zippedData;
+                this.originalStartPosition = originalStartPosition;
+                this.compressedData = compressedData;
             }
 
             private static bool TryReadNext(Stream stream, out CompressedPortion chunk)
@@ -90,16 +89,16 @@ namespace GZipTest
                             uncompressedStream.CopyTo(zipStream);
                         }
 
-                        return new CompressedPortion(portion.StartPostion, compressedStream.ToArray());
+                        return new CompressedPortion(portion.StartPosition, compressedStream.ToArray());
                     }
                 }
             }
             
             public void WriteCompressedTo(Stream stream)
             {
-                stream.WriteLong(_originalStartPostion);
-                stream.WriteLong(_zippedData.Length);
-                stream.Write(_zippedData, 0, _zippedData.Length);
+                stream.WriteLong(originalStartPosition);
+                stream.WriteLong(compressedData.Length);
+                stream.Write(compressedData, 0, compressedData.Length);
             }
             
             public static IEnumerable<CompressedPortion> ReadAllFrom(Stream stream)
@@ -113,7 +112,7 @@ namespace GZipTest
 
             public StreamPortion Decompress()
             {
-                using (var compressedStream = new MemoryStream(_zippedData))
+                using (var compressedStream = new MemoryStream(compressedData))
                 {
                     using (var zip = new GZipStream(compressedStream, CompressionMode.Decompress))
                     {
@@ -122,7 +121,7 @@ namespace GZipTest
                             uncompressedStream.Position = 0;
                             zip.CopyTo(uncompressedStream);
 
-                            return new StreamPortion(_originalStartPostion, uncompressedStream.ToArray());
+                            return new StreamPortion(originalStartPosition, uncompressedStream.ToArray());
                         }
                     }
                 }

@@ -24,7 +24,7 @@ namespace TestGZipTest
                 });
 
             var completed = new ManualResetEvent(false);
-            forAll.RegisterOnfinished(_ => completed.Set());
+            forAll.RegisterOnFinished(_ => completed.Set());
 
             forAll.Start();
 
@@ -36,7 +36,7 @@ namespace TestGZipTest
         [TestMethod]
         public void TestCancel()
         {
-            bool? cancelled = null;
+            bool? canceled = null;
 
             var lastEnumerated = -1;
             var lastProcessed = -1;
@@ -46,7 +46,7 @@ namespace TestGZipTest
             var endlessSource = Enumerable.Range(0, 10).Select(n =>
             {
                 if (n > 3)
-                    TestMonitorSimple.WaitAlittle();
+                    TestMonitorSimple.WaitALittle();
 
                 lastEnumerated = n;
                 return n;
@@ -55,18 +55,18 @@ namespace TestGZipTest
             var doForAll = new ForAll<int>(endlessSource, n => Thread.VolatileWrite(ref lastProcessed, n),
                 new ParallelSettings {Cancellation = cancellation});
 
-            doForAll.RegisterOnfinished(f => cancelled = f.IsCancelled);
+            doForAll.RegisterOnFinished(f => canceled = f.IsCanceled);
 
             doForAll.Start();
-            TestMonitorSimple.WaitAlittle();
+            TestMonitorSimple.WaitALittle();
             cancellation.Cancel();
-            TestMonitorSimple.WaitAlittle();
+            TestMonitorSimple.WaitALittle();
 
             AssertEx.Throws<OperationCanceledException>(() => doForAll.Wait());
             Assert.IsTrue(lastProcessed > -1, "Looks like processing had not even started");
             Assert.IsTrue(lastEnumerated > -1, "Looks like enumeration of source had not even started");
-            Assert.IsTrue(cancelled != null && cancelled.Value);
-            Assert.IsTrue(doForAll.IsCancelled);
+            Assert.IsTrue(canceled != null && canceled.Value);
+            Assert.IsTrue(doForAll.IsCanceled);
             Assert.IsTrue(lastProcessed < 9);
             Assert.IsTrue(lastEnumerated < 9);
         }

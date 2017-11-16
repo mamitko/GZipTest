@@ -3,16 +3,16 @@ using System.Threading;
 
 namespace GZipTest.Threading
 {
-    //todo? insert Thread.MemoryBarier invocations
+    //todo? insert Thread.MemoryBarrier invocations
 
     public class MonitorSimple: IDisposable
     {
-        private readonly ControlFlowQueue _readyQueue = new ControlFlowQueue();
+        private readonly ControlFlowQueue readyQueue = new ControlFlowQueue();
 
-        private int _waitersCount;
-        private readonly AutoResetEvent _waitGate = new AutoResetEvent(false); 
+        private int waitersCount;
+        private readonly AutoResetEvent waitGate = new AutoResetEvent(false); 
 
-        private LockOwningState _owning = LockOwningState.Ownerless;
+        private LockOwningState owning = LockOwningState.Ownerless;
 
         public void Enter()
         {
@@ -20,10 +20,10 @@ namespace GZipTest.Threading
                 throw new InvalidOperationException();
 
             // Todo something: TryEnter(true) never returns false. 
-            // Consider replacing with another exception or even assertion (it's private method so think it's accaptable) 
+            // Consider replacing with another exception or even assertion (it's private method so think it's acceptable) 
             // and
             // Split ControlFlowQueue.TryEnter(bool) into Enter() end TryEnter() with no params. 
-            // It was supposed to work as a sort of incapsulation, but actually just makes a mess and confuses.
+            // It was supposed to work as a sort of encapsulation, but actually just makes a mess and confuses.
         }
         
         public bool TryEnter()
@@ -33,44 +33,44 @@ namespace GZipTest.Threading
 
         private bool TryEnter(bool threadBlockingAllowed)
         {
-            if (_owning.IsOwnedByCurrentThread)
+            if (owning.IsOwnedByCurrentThread)
             {
-                _owning.DepthIncreasing();
+                owning.DepthIncreasing();
                 return true;
             }
             
-            if (!_readyQueue.TryEnter(threadBlockingAllowed))
+            if (!readyQueue.TryEnter(threadBlockingAllowed))
                 return false;
 
-            _owning.Started();
+            owning.Started();
             return true;
         }
 
         public void Exit()
         {
-            _owning.CheckIsOwnedByCurrentThread();
+            owning.CheckIsOwnedByCurrentThread();
 
-            if (_owning.DepthDecreased() == 0)
-                _readyQueue.Exit();
+            if (owning.DepthDecreased() == 0)
+                readyQueue.Exit();
         }
 
         public void Wait()
         {
-            _owning.CheckIsOwnedByCurrentThread();
+            owning.CheckIsOwnedByCurrentThread();
 
-            Interlocked.Increment(ref _waitersCount);
-            // it's vitally important to incremet _waitersCount before releasing _readyQueue. 
+            Interlocked.Increment(ref waitersCount);
+            // it's vitally important to increment _waitersCount before releasing _readyQueue. 
             // Otherwise theoretically Pulse() can be invoked before _watersCount is incremented, find no waiters and do not "open" _waitGate.
 
-            var savedOwningState = _owning;
-            _owning = LockOwningState.Ownerless;
-            _readyQueue.Exit();
+            var savedOwningState = owning;
+            owning = LockOwningState.Ownerless;
+            readyQueue.Exit();
 
-            _waitGate.WaitOne();
-            Interlocked.Decrement(ref _waitersCount);
+            waitGate.WaitOne();
+            Interlocked.Decrement(ref waitersCount);
 
-            _readyQueue.Enter();
-            _owning = savedOwningState;
+            readyQueue.Enter();
+            owning = savedOwningState;
         }
 
         public void PulseAll()
@@ -82,12 +82,12 @@ namespace GZipTest.Threading
 
         public bool Pulse()
         {
-            _owning.CheckIsOwnedByCurrentThread();
+            owning.CheckIsOwnedByCurrentThread();
 
-            if (Thread.VolatileRead(ref _waitersCount) == 0)
+            if (Thread.VolatileRead(ref waitersCount) == 0)
                 return false;
 
-            _waitGate.Set();
+            waitGate.Set();
             return true;
         }
 
@@ -100,8 +100,8 @@ namespace GZipTest.Threading
 
         public void Dispose()
         {
-            _readyQueue.Dispose();
-            ((IDisposable)_waitGate).Dispose();
+            readyQueue.Dispose();
+            ((IDisposable)waitGate).Dispose();
             // Not sure is it good idea or not to invoke Dispose this way. Perhaps there were some reasons to make it protected in 3.5
         }
 

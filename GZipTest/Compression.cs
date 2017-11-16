@@ -4,24 +4,25 @@ using GZipTest.Parallelizing;
 
 namespace GZipTest
 {
+    //TODO extract something like abstract "Compressor" (with two descendants) class to get rid of two set of public methods
+
     public partial class Compression
     {
         internal const int PortionLengthBytes = 5 * (1 << 20);
+
         private const int OutputBufferSizePcs = 50*(1 << 20)/PortionLengthBytes;
-        private static int PrereadBufferSizePcs { get { return Parallelism.DefaultDegree; } }
-        
-        private Cancellation _cancellation;
-        
-        // Тут две реализации (две пары методов Compress-Decompress): подлиннее и покороче
+        private static int PreReadBufferSizePcs => Parallelism.DefaultDegree;
+
+        private Cancellation cancellation;
         
         public void Compress(Stream src, Stream dst)
         {
-            _cancellation = new Cancellation();
+            cancellation = new Cancellation();
 
             var compressed = StreamPortion.SplitStream(src, PortionLengthBytes)
-                .Buffered(_cancellation, PrereadBufferSizePcs) // This line is optional but for certain reasons it increases CPU utilization.
-                .SelectParallely(portion => CompressedPortion.Compress(portion), _cancellation)
-                .WithBoundedOutputCapacity(OutputBufferSizePcs); // This line prevents OutOfMemmoryException on large files or with slow output disk storages.
+                .Buffered(cancellation, PreReadBufferSizePcs)
+                .SelectParallely(portion => CompressedPortion.Compress(portion), cancellation)
+                .WithBoundedOutputCapacity(OutputBufferSizePcs);
 
             foreach (var chunk in compressed)
             {
@@ -32,28 +33,26 @@ namespace GZipTest
 
         public void Decompress(Stream src, Stream dst)
         {
-            _cancellation = new Cancellation();
+            cancellation = new Cancellation();
 
             var decompressed = CompressedPortion.ReadAllFrom(src)
-                .Buffered(_cancellation, PrereadBufferSizePcs) // This line is optional but for certain reasons it increases CPU utilization.
-                .SelectParallely(chunk => chunk.Decompress(), _cancellation)
-                .WithBoundedOutputCapacity(OutputBufferSizePcs); // This line prevents OutOfMemmoryException on large files or with slow output disk storages.
+                .Buffered(cancellation, PreReadBufferSizePcs)
+                .SelectParallely(chunk => chunk.Decompress(), cancellation) 
+                .WithBoundedOutputCapacity(OutputBufferSizePcs);
 
             foreach (var portion in decompressed)
             {
-                portion.WriteToItsPlace(dst);
+                portion.WriteAtItsPlace(dst);
                 OnProgressChanged();
             }
         }
-
-        // As Short As I Was Able
-
-        public void CompressAsaiwa(Stream src, Stream dst)
+        
+        public void CompressEtude(Stream src, Stream dst)
         {
-            _cancellation = new Cancellation();
+            cancellation = new Cancellation();
 
             var compressed = StreamPortion.SplitStream(src, PortionLengthBytes)
-                .SelectParallellyAsaiwa(portion => CompressedPortion.Compress(portion), _cancellation, PrereadBufferSizePcs, OutputBufferSizePcs);
+                .SelectParallelyEtude(portion => CompressedPortion.Compress(portion), cancellation, PreReadBufferSizePcs, OutputBufferSizePcs);
 
             foreach (var chunk in compressed)
             {
@@ -62,26 +61,23 @@ namespace GZipTest
             }
         }
 
-        public void DecompressAsaiwa(Stream src, Stream dst)
+        public void DecompressEtude(Stream src, Stream dst)
         {
-            _cancellation = new Cancellation();
+            cancellation = new Cancellation();
 
             var decompressed = CompressedPortion.ReadAllFrom(src)
-                .SelectParallellyAsaiwa(chunk => chunk.Decompress(), _cancellation, PrereadBufferSizePcs, OutputBufferSizePcs);
+                .SelectParallelyEtude(chunk => chunk.Decompress(), cancellation, PreReadBufferSizePcs, OutputBufferSizePcs);
 
             foreach (var portion in decompressed)
             {
-                portion.WriteToItsPlace(dst);
+                portion.WriteAtItsPlace(dst);
                 OnProgressChanged();
             }
         }
 
         public void Cancel()
         {
-            if (_cancellation == null) 
-                return;
-
-            _cancellation.Cancel();
+            cancellation?.Cancel();
         }
 
         public event EventHandler ProgressChanged;

@@ -11,13 +11,15 @@ namespace TestGZipTest
     [TestClass]
     public class TestCompression
     {
+        //TODO test the other one set of compress-decompress methods (after extraction Compressor, see todo notes on Compression class)
+
         private static byte[] GetCompressed(byte[] array)
         {
             using (var src = new MemoryStream(array))
             {
                 using (var dst = new MemoryStream())
                 {
-                    new Compression().CompressAsaiwa(src, dst);
+                    new Compression().Compress(src, dst);
                     return dst.ToArray();
                 }
             }
@@ -29,7 +31,7 @@ namespace TestGZipTest
             {
                 using (var dst = new MemoryStream())
                 {
-                    new Compression().DecompressAsaiwa(src, dst);
+                    new Compression().Decompress(src, dst);
                     return dst.ToArray();
                 }
             }
@@ -75,7 +77,7 @@ namespace TestGZipTest
                 });
                 thread.Start();
 
-                compression.CompressAsaiwa(almostEndlessStream, dst);
+                compression.Compress(almostEndlessStream, dst);
             }
         }
     }

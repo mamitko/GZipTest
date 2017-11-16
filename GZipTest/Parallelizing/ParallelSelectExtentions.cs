@@ -14,7 +14,7 @@ namespace GZipTest.Parallelizing
         {
             return SelectParallely(enumerable, i => i, cancellation)
                 .WithBoundedOutputCapacity(bufferCapacity)
-                .WithForcedDegreeOfParallelizm(1);
+                .WithForcedDegreeOfParallelism(1);
         }
     }
 }

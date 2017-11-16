@@ -9,53 +9,55 @@ namespace GZipTest.Parallelizing
     /// </summary>
     internal class ForAll<T>: ParallelWorkerBase
     {
-        private readonly IEnumerable<T> _source;
-        private readonly Action<T> _action;
-        private Action<ForAll<T>> _onFinishedCallback;
-        
-        private EnumerableThreadSafeWrapper<T> _wrappedSource;
+        private readonly IEnumerable<T> source;
+        private readonly Action<T> action;
+
+        private Action<ForAll<T>> onFinishedCallback;
+        private EnumerableThreadSafeWrapper<T> wrappedSource;
 
         protected override void DoWork(Cancellation cancellation, int workersTotal, int thisWorkerIndex)
         {
-            if (_wrappedSource == null)
+            if (wrappedSource == null)
             {
-                var ws = new EnumerableThreadSafeWrapper<T>(_source);
-                if (Interlocked.CompareExchange(ref _wrappedSource, ws, null) != null)
+                var ws = new EnumerableThreadSafeWrapper<T>(source);
+                if (Interlocked.CompareExchange(ref wrappedSource, ws, null) != null)
                     ws.Dispose();
             }
 
             T item;
-            while (!cancellation.IsCanceled && _wrappedSource.TryGetNext(out item))
+            while (!cancellation.IsCanceled && wrappedSource.TryGetNext(out item))
             {
-                _action(item);
+                action(item);
             }
         }
 
-        protected override void OnCompleteOrCancelled()
+        protected override void OnCompleteOrCanceled()
         {
-            if (_onFinishedCallback != null)
-                _onFinishedCallback(this);
+            onFinishedCallback?.Invoke(this);
         }
 
         protected override void OnLastWorkerFinishing()
         {
-            if (_wrappedSource != null)
-                _wrappedSource.Dispose();
+            wrappedSource?.Dispose();
         }
 
-        public void RegisterOnfinished(Action<ForAll<T>> onFinishedCallback)
+        public void RegisterOnFinished(Action<ForAll<T>> callback)
         {
+            // TODO what if got finished "after" checking IsFinished but "before" subscribing?
+            // TODO what about subscribing more then once?
+            // TODO consider moving these all into base class
+
             if (IsFinished)
-                onFinishedCallback(this);
+                callback(this);
             else
-                _onFinishedCallback += onFinishedCallback;
+                onFinishedCallback += callback;
         }
-        
+
         public ForAll(IEnumerable<T> source, Action<T> action, ParallelSettings settings = default(ParallelSettings))
             : base(settings)
         {
-            _source = source;
-            _action = action;
+            this.source = source;
+            this.action = action;
         }
     }
 }

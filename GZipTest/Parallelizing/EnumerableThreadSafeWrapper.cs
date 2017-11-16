@@ -10,68 +10,66 @@ namespace GZipTest.Parallelizing
     //  - из обычного enumerable эффективнее читать одним потоком в буффер;
     //  - между многопоточными источниками-приемниками это будет "узким местом"
     {
-        private readonly IEnumerable<T> _source;
-        private readonly MonitorSimple _sourceLock = new MonitorSimple();
+        private readonly IEnumerable<T> source;
+        private readonly MonitorSimple sourceLock = new MonitorSimple();
 
-        private IEnumerator<T> _sourceEnumerator;
-        private ReferenceBool _disposeReqeusted;
-        private int _timesTriedToGetNext;
+        private IEnumerator<T> sourceEnumerator;
+        private ReferenceBool disposeRequested;
+        private int timesTriedToGetNext;
 
         public EnumerableThreadSafeWrapper(IEnumerable<T> source)
         {
-            _source = source;
+            this.source = source;
         }
         
         public bool TryGetNext(out T item)
         {
-            if (_disposeReqeusted)
+            if (disposeRequested)
                 throw new ObjectDisposedException(ToString());
             
             item = default(T);
-            if (_disposeReqeusted)
+            if (disposeRequested)
                 return false;
 
-            Interlocked.Increment(ref _timesTriedToGetNext);
+            Interlocked.Increment(ref timesTriedToGetNext);
             try
             {
-                using (_sourceLock.GetLocked())
+                using (sourceLock.GetLocked())
                 {                    
-                    if (_disposeReqeusted)
+                    if (disposeRequested)
                         return false;
                                         
-                    if (_sourceEnumerator == null)
-                        _sourceEnumerator = _source.GetEnumerator();
+                    if (sourceEnumerator == null)
+                        sourceEnumerator = source.GetEnumerator();
 
-                    if (!_sourceEnumerator.MoveNext())                                           
+                    if (!sourceEnumerator.MoveNext())                                           
                         return false;
 
-                    item = _sourceEnumerator.Current;
+                    item = sourceEnumerator.Current;
                     return true;
                 }
             }
             finally
             {
-                if (Interlocked.Decrement(ref _timesTriedToGetNext) == 0 & _disposeReqeusted)
+                if (Interlocked.Decrement(ref timesTriedToGetNext) == 0 & disposeRequested)
                     DisposeInternals();
             }
        } 
 
         private void DisposeInternals()
-        {            
-            if (_sourceEnumerator != null)
-                _sourceEnumerator.Dispose();
-
-            _sourceLock.Dispose();
+        {
+            sourceEnumerator?.Dispose();
+            sourceLock.Dispose();
         }
 
         public void Dispose()
         {
-            if (Interlocked.CompareExchange(ref _disposeReqeusted, true, false))
+            if (Interlocked.CompareExchange(ref disposeRequested, true, false))
                 return;
 
-            // if source is busy, just leave scheduled _disposeReqeusted and return.
+            // if source is busy, just leave scheduled disposeRequested and return.
             // Real disposal will be done on the end of last TryGetNext()
-            if (!_sourceLock.TryEnter())
+            if (!sourceLock.TryEnter())
                 return;
             try
             {
@@ -79,7 +77,7 @@ namespace GZipTest.Parallelizing
             }
             finally
             {
-                _sourceLock.Exit();                
+                sourceLock.Exit();                
             }
         }
     }

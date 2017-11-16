@@ -23,6 +23,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
+    <LangVersion>6</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -46,7 +47,7 @@
   <ItemGroup>
     <Compile Include="Compression.Portions.cs" />
     <Compile Include="Parallelizing\BlockingQueue.cs" />
-    <Compile Include="Parallelizing\ParallelSelectAsaiwa.cs" />
+    <Compile Include="Parallelizing\ParallelSelectEtude.cs" />
     <Compile Include="Parallelizing\ParallelWorkerBase.cs" />
     <Compile Include="Threading\BoolFlag.cs" />
     <Compile Include="Parallelizing\Cancellation.cs" />
@@ -65,7 +66,7 @@
     <Compile Include="Threading\ControlFlowQueue.cs" />
     <Compile Include="Threading\LockOwningState.cs" />
     <Compile Include="Threading\MonitorSimple.cs" />
-    <Compile Include="Threading\SpinWait.cs" />
+    <Compile Include="Threading\SpinWaitStolen.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

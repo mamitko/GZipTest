@@ -7,23 +7,23 @@ namespace GZipTest.Parallelizing
 {
     public class BlockingQueue<T>
     {
-        private readonly int _boundedCapacity;
-        private readonly MonitorSimple _sync = new MonitorSimple();
-        private readonly Queue<T> _queue = new Queue<T>();
+        private readonly int boundedCapacity;
+        private readonly MonitorSimple sync = new MonitorSimple();
+        private readonly Queue<T> queue = new Queue<T>();
 
         public bool IsAddingCompleted { get; private set; }
 
         public BlockingQueue(int boundedCapacity = -1)
         {
-            _boundedCapacity = boundedCapacity;
+            this.boundedCapacity = boundedCapacity;
         }
 
         public void CompleteAdding()
         {
-            using (_sync.GetLocked())
+            using (sync.GetLocked())
             {
                 IsAddingCompleted = true;
-                _sync.PulseAll();
+                sync.PulseAll();
             }
         }
 
@@ -32,7 +32,7 @@ namespace GZipTest.Parallelizing
             if (IsAddingCompleted)
                 return false;
             
-            using (_sync.GetLocked())
+            using (sync.GetLocked())
             {
                 if (IsAddingCompleted)
                     return false;
@@ -53,16 +53,16 @@ namespace GZipTest.Parallelizing
 
         private void Add(T item)
         {
-            using (_sync.GetLocked())
+            using (sync.GetLocked())
             {
                 if (IsAddingCompleted)
                     throw new InvalidOperationException();
 
-                while (_boundedCapacity >= 0 && _queue.Count >= _boundedCapacity && !IsAddingCompleted)
-                    _sync.Wait();
+                while (boundedCapacity >= 0 && queue.Count >= boundedCapacity && !IsAddingCompleted)
+                    sync.Wait();
 
-                _queue.Enqueue(item);
-                _sync.Pulse();
+                queue.Enqueue(item);
+                sync.Pulse();
             }
         }
 
@@ -72,22 +72,22 @@ namespace GZipTest.Parallelizing
         /// <returns>Whether an item was taken or not</returns>
         private bool TakeOrTryWait(out T item)
         {
-            using (_sync.GetLocked())
+            using (sync.GetLocked())
             {
-                while (_queue.Count == 0 && !IsAddingCompleted)
+                while (queue.Count == 0 && !IsAddingCompleted)
                 {
-                    _sync.Wait();
+                    sync.Wait();
                 }
 
-                if (_queue.Count <= 0)
+                if (queue.Count <= 0)
                 {
                     Debug.Assert(IsAddingCompleted);
                     item = default(T);
                     return false;
                 }
 
-                item = _queue.Dequeue();
-                _sync.PulseAll();
+                item = queue.Dequeue();
+                sync.PulseAll();
                 return true;
             }
         }

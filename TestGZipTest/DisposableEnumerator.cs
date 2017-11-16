@@ -6,11 +6,11 @@ namespace TestGZipTest
 {
     public class DisposableEnumerator<T>: IEnumerable<T>, IEnumerator<T>
     {
-        private readonly IEnumerator<T> _origin;
+        private readonly IEnumerator<T> origin;
 
         public DisposableEnumerator(IEnumerable<T> source)
         {
-            _origin = source.GetEnumerator();
+            origin = source.GetEnumerator();
         }
 
         public bool IsDisposed { get; private set; }
@@ -32,10 +32,10 @@ namespace TestGZipTest
 
         public bool MoveNext()
         {
-            if (!_origin.MoveNext())
+            if (!origin.MoveNext())
                 return false;
 
-            Current = _origin.Current;
+            Current = origin.Current;
             return true;
         }
 

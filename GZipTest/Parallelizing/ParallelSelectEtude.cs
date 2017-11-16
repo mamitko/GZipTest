@@ -5,30 +5,34 @@ using System.Threading;
 
 namespace GZipTest.Parallelizing
 {
-    public static class ParallelSelectAsaiwa // As Short As I Was Able
+    public static class ParallelSelectEtude
     {
-        // Слишком запутанно для прикладного "продакшен кода", но по ряду причин, наверное, может быть приемлемо.
+        // It's just for self-trainings. I do realize these all is to complicated and weird for production-quality code.
 
         private static BlockingQueue<TDestination> StartSelecting<TSource, TDestination>(
-            Func<IEnumerable<TSource>> getSource, Func<TSource, TDestination> selector, Action<Exception> onFirstExceptionCallback, Cancellation canceller, 
-            int threadsDesired, int bufferCapcity = -1)
+            Func<IEnumerable<TSource>> getSource, 
+            Func<TSource, TDestination> selector, 
+            Action<Exception> onFirstExceptionCallback, 
+            Cancellation cancellation, 
+            int threadsDesired, 
+            int bufferCapacity = -1)
         {
             Exception firstException = null;
             var workersCountDesired = Math.Max(1, threadsDesired > 0 ? threadsDesired : Environment.ProcessorCount);
             var enumerables = Enumerable.Range(0, workersCountDesired).Select(_ => getSource()).Where(srs => srs != null).ToArray();
-            var outputBuffer = new BlockingQueue<TDestination>(bufferCapcity);
+            var outputBuffer = new BlockingQueue<TDestination>(bufferCapacity);
 
-            var threadesFinished = 0;
+            var threadsFinished = 0;
             foreach (var source in enumerables)
             {
-                var capturedSource = source; // old compliers use the same "instance" of loop varable for all iterations (Language Specification C#4.0 section 8.8.4)
+                var capturedSource = source; // old compilers use the same "instance" of loop variable for all iterations (Language Specification C#4.0 section 8.8.4)
                 var worker = new Thread(() =>
                 {
                     try
                     {
                         foreach (var item in capturedSource)
                         {
-                            canceller.ThrowIfCancelled();
+                            cancellation.ThrowIfCancelled();
 
                             Thread.MemoryBarrier();
                             if (firstException != null)
@@ -45,7 +49,7 @@ namespace GZipTest.Parallelizing
                     }
                     finally
                     {
-                        if (Interlocked.Increment(ref threadesFinished) == enumerables.Length)
+                        if (Interlocked.Increment(ref threadsFinished) == enumerables.Length)
                             outputBuffer.CompleteAdding();
 
                     }
@@ -57,11 +61,14 @@ namespace GZipTest.Parallelizing
             return outputBuffer;
         }
 
-        public static IEnumerable<TDestination> SelectParallellyAsaiwa<TSource, TDestination>(
-            this IEnumerable<TSource> source, Func<TSource, TDestination> selector, Cancellation canceller = null, 
-            int prefetchBufferCapacity = -1, int outputBufferCapcity = -1)
+        public static IEnumerable<TDestination> SelectParallelyEtude<TSource, TDestination>(
+            this IEnumerable<TSource> source, 
+            Func<TSource, TDestination> selector, 
+            Cancellation cancellation = null, 
+            int prefetchBufferCapacity = -1, 
+            int outputBufferCapacity = -1)
         {
-            canceller = canceller ?? Cancellation.Uncancallable;
+            cancellation = cancellation ?? Cancellation.Uncancallable;
             Exception firstException = null;
             Action<Exception> onException = e => Interlocked.CompareExchange(ref firstException, e, null);
 
@@ -69,17 +76,17 @@ namespace GZipTest.Parallelizing
                 getSource: () => Interlocked.Exchange(ref source, null), 
                 selector: _ => _, 
                 onFirstExceptionCallback: onException, 
-                canceller: canceller, 
+                cancellation: cancellation, 
                 threadsDesired: 1, 
-                bufferCapcity: prefetchBufferCapacity);
+                bufferCapacity: prefetchBufferCapacity);
 
             var outputBuffer = StartSelecting(
                 getSource: inputBuffer.GetConsumingEnumerable, 
                 selector: selector, 
                 onFirstExceptionCallback: onException, 
-                canceller: canceller, 
+                cancellation: cancellation, 
                 threadsDesired: Parallelism.DefaultDegree, 
-                bufferCapcity: outputBufferCapcity);
+                bufferCapacity: outputBufferCapacity);
             
             foreach (var processed in outputBuffer.GetConsumingEnumerable())
             {

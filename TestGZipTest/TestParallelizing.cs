@@ -7,10 +7,10 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace TestGZipTest
 {
-    class MyCustomException : Exception { };
+    internal class MyCustomException : Exception { };
 
     [TestClass]
-    public class TestParallellizing
+    public class TestParallelizing
     {
         [TestMethod]
         public void TestInGeneral()
@@ -141,7 +141,7 @@ namespace TestGZipTest
             
             wrapper.Dispose();
             // Source Enumerator is stuck down but Dispose returns immediately 
-            // and real disposal is schedulled on the ending of last TryGetNex()
+            // and real disposal is scheduled on the ending of last TryGetNex()
 
             int item;
             AssertEx.Throws<ObjectDisposedException>(() => wrapper.TryGetNext(out item)); 
@@ -163,9 +163,9 @@ namespace TestGZipTest
 
             var rnd = new ThreadLocal<Random>(() => new Random());
             var generatedTotal = 0;
-            var consummedTotal = 0;
+            var consumedTotal = 0;
 
-            var producers = TestMonitorSimple.RunSimultanously(5, () =>
+            var producers = TestMonitorSimple.RunSimultaneously(5, () =>
             {
                 for (var i = 0; i < 1e6; i++)
                 {
@@ -175,11 +175,11 @@ namespace TestGZipTest
                 }
             }, false);
 
-            var consumers = TestMonitorSimple.RunSimultanously(5, () =>
+            var consumers = TestMonitorSimple.RunSimultaneously(5, () =>
             {
                 foreach (var value in queue.GetConsumingEnumerable())
                 {
-                    Interlocked.Add(ref consummedTotal, value);
+                    Interlocked.Add(ref consumedTotal, value);
                 }
             }, false);
 
@@ -188,7 +188,7 @@ namespace TestGZipTest
 
             consumers.ForEach(t => t.Join());
 
-            Assert.IsTrue(consummedTotal == generatedTotal);
+            Assert.IsTrue(consumedTotal == generatedTotal);
         }
 
         private static IEnumerable<int> StuckDownEnumerable(WaitHandle stickWhileEvent)
