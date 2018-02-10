@@ -7,7 +7,7 @@ namespace GZipTest.Parallelizing
     {
         public static ParallelSelect<TSource, TResult> SelectParallely<TSource, TResult>(this IEnumerable<TSource> enumerable, Func<TSource, TResult> func, Cancellation cancellation = null)
         {
-            return new ParallelSelect<TSource, TResult>(enumerable, func, new ParallelSettings {Cancellation = cancellation});
+            return new ParallelSelect<TSource, TResult>(enumerable, func, new ParallelSettings(cancellation));
         }
 
         public static ParallelSelect<T, T> Buffered<T>(this IEnumerable<T> enumerable, Cancellation cancellation = null, int? bufferCapacity = null)

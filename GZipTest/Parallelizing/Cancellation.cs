@@ -6,10 +6,7 @@ namespace GZipTest.Parallelizing
 {
     public class Cancellation
     {
-        public static readonly Cancellation Uncancallable = new Cancellation();
-
-        private Action _onCancelledCallbacks;
-        private readonly BoolFlag _isCanceled = new BoolFlag(false);
+        public static readonly Cancellation NonCancalable = new Cancellation();
 
         public static Cancellation CreateLinked(Cancellation source)
         {
@@ -18,46 +15,51 @@ namespace GZipTest.Parallelizing
             {
                 cancellation.Cancel();
             });
+
             return cancellation;
         }
 
+        private readonly BoolFlag isCanceled = new BoolFlag(false);
+        private Action onCanceledCallbacks;
+
+        public bool IsCanceled => isCanceled.Value;
+
         public void Cancel()
         {
-            if (this == Uncancallable)
+            if (this == NonCancalable)
                 return;
 
-            if (_isCanceled.InterlockedCompareAssign(true, false))
+            if (isCanceled.InterlockedCompareAssign(true, false))
                 return;
-            
-            if (_onCancelledCallbacks != null)
-                _onCancelledCallbacks();
+
+            onCanceledCallbacks?.Invoke();
         }
 
-        public bool IsCanceled { get { return _isCanceled; } }
-        
-        public void ThrowIfCancelled()
+        public void ThrowIfCanceled()
         {
-            if (_isCanceled)
+            if (isCanceled)
             {
                 throw new OperationCanceledException();
             }
         }
 
-        public void RegisterCallback(Action onCacelledCallback)
+        public void RegisterCallback(Action canceledCallback)
         {
             if (IsCanceled)
             {
-                onCacelledCallback();
+                canceledCallback();
                 return;
             }
 
-            var sw = new SpinWaitStolen();
+            var sw = new SpinWait();
             while (true)
             {
-                var wasInstance = _onCancelledCallbacks;
-                var newInstance = wasInstance + onCacelledCallback; 
-                if (Interlocked.CompareExchange(ref _onCancelledCallbacks, newInstance, wasInstance) == wasInstance)
+                var wasInstance = onCanceledCallbacks;
+                var newInstance = wasInstance + canceledCallback;
+
+                if (Interlocked.CompareExchange(ref onCanceledCallbacks, newInstance, wasInstance) == wasInstance)
                     break;
+
                 sw.SpinOnce();
             }
         }

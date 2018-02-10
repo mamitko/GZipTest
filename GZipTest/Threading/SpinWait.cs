@@ -5,15 +5,15 @@ using System.Threading;
 
 namespace GZipTest.Threading
 {
-    struct SpinWaitStolen
-    // Сopypasted from FCL source code just a little bit less than completely
+    public struct SpinWait
+    // Copy-pasted from FCL source code just a little bit less than completely
     {
         [DllImport("kernel32.dll"), HostProtection(SecurityAction.LinkDemand, ExternalThreading = true)]
         private static extern bool SwitchToThread();
 
         private static bool IsSingleProcessor => Environment.ProcessorCount == 1;
-        // Author assumes that single-core hyper-threading CPUs are quite rare so the number of logical cores will fit the needs.
-        // Think it works for virtual machines too.
+        // Assume that single-core hyper-threading CPUs are quite rare so the number of logical cores will fit the needs.
+        // Hope this will work for virtual machines too.
 
         private int spinsOnceDone;
         

@@ -19,10 +19,7 @@ namespace GZipTest.Parallelizing
             throw new CrossThreadTransferredException(exception);
         }
 
-        public override string Message
-        {
-            get { return DigOutTrueException(InnerException).Message; }
-        }
+        public override string Message => DigOutTrueException(InnerException).Message;
 
         private CrossThreadTransferredException(Exception innerException)
             : base (StdMessage, DigOutTrueException(innerException))

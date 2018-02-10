@@ -10,7 +10,7 @@ namespace GZipTest.Parallelizing
         private readonly Func<TSource, TResult> selectorFunc;
         private readonly ParallelSettings settings;
         private readonly int? outBufferCapacity;
-
+        
         public ParallelSelect<TSource, TResult> WithBoundedOutputCapacity(int? boundedCapacity)
         {
             return new ParallelSelect<TSource, TResult>(source, selectorFunc, settings, boundedCapacity);
@@ -18,9 +18,7 @@ namespace GZipTest.Parallelizing
 
         public ParallelSelect<TSource, TResult> WithForcedDegreeOfParallelism(int degreeOfParallelism)
         {
-            var newSettings = settings;
-            newSettings.ForcedDegreeOfParallelizm = degreeOfParallelism;
-
+            var newSettings = settings.Modified(forcedDegreeOfParallelism: degreeOfParallelism);
             return new ParallelSelect<TSource, TResult>(source, selectorFunc, newSettings, outBufferCapacity);
         }
 
@@ -34,8 +32,6 @@ namespace GZipTest.Parallelizing
 
         public IEnumerator<TResult> GetEnumerator()
         { 
-            // В "промышленном" коде это был бы отдельный _рукописный_ класс вместо конечного автомата замыканиями.
-
             var buffer = new BlockingQueue<TResult>(outBufferCapacity ?? -1);
             
             var forAll = new ForAll<TSource>(source, i => buffer.AddIfNotCompleted(selectorFunc(i)), settings);

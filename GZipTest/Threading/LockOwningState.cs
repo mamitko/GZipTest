@@ -37,10 +37,7 @@ namespace GZipTest.Threading
             return depth;
         }
 
-        public bool IsOwnedByCurrentThread
-        {
-            get { return threadId == Thread.CurrentThread.ManagedThreadId; }
-        }
+        public bool IsOwnedByCurrentThread => threadId == Thread.CurrentThread.ManagedThreadId;
 
         public void CheckIsOwnedByCurrentThread()
         {

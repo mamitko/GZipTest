@@ -18,10 +18,11 @@ namespace TestGZipTest
             var sum = Enumerable.Range(0, 10).Select(i => i*2).Sum();
             var sum1 = 0;
             var sum2 = Enumerable.Range(0, 10).SelectParallely(i =>
-            {
-                Interlocked.Add(ref sum1, i*2);
-                return i*2;
-            }).AsEnumerable().Sum();
+                {
+                    Interlocked.Add(ref sum1, i * 2);
+                    return i * 2;
+                })
+                .AsEnumerable().Sum();
 
             Assert.AreEqual(sum, sum1);
             Assert.AreEqual(sum, sum2);

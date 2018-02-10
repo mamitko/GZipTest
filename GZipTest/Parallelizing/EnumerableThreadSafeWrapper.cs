@@ -6,9 +6,9 @@ using GZipTest.Threading;
 namespace GZipTest.Parallelizing
 {
     internal class EnumerableThreadSafeWrapper<T> : IDisposable
-    // идея так себе:
-    //  - из обычного enumerable эффективнее читать одним потоком в буффер;
-    //  - между многопоточными источниками-приемниками это будет "узким местом"
+    // In practice, the very idea this class implements, is not good 
+    // since it's more efficient to fetch with one thread, 
+    // put into a thread-safe buffer and share this buffer with multi-threaded consumers.
     {
         private readonly IEnumerable<T> source;
         private readonly MonitorSimple sourceLock = new MonitorSimple();
@@ -51,7 +51,7 @@ namespace GZipTest.Parallelizing
             }
             finally
             {
-                if (Interlocked.Decrement(ref timesTriedToGetNext) == 0 & disposeRequested)
+                if (Interlocked.Decrement(ref timesTriedToGetNext) == 0 && disposeRequested)
                     DisposeInternals();
             }
        } 
@@ -67,8 +67,8 @@ namespace GZipTest.Parallelizing
             if (Interlocked.CompareExchange(ref disposeRequested, true, false))
                 return;
 
-            // if source is busy, just leave scheduled disposeRequested and return.
-            // Real disposal will be done on the end of last TryGetNext()
+            // if the source is busy, just leave scheduled disposeRequested and return.
+            // Actual disposal will be performed on the end of last TryGetNext()
             if (!sourceLock.TryEnter())
                 return;
             try

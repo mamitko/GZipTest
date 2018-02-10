@@ -2,15 +2,21 @@
 {
     public struct ParallelSettings
     {
-        // структура мутабельной сделана намеренно
+        private readonly Cancellation cancellation;
 
-        private Cancellation _cancellation;
+        public Cancellation Cancellation => cancellation ?? Cancellation.NonCancalable;
 
-        public Cancellation Cancellation
+        public int? ForcedDegreeOfParallelism { get; }
+
+        public ParallelSettings(Cancellation cancellation, int? forcedDegreeOfParallelism = null)
         {
-            get { return _cancellation ?? Cancellation.Uncancallable; } // не уверен, что хорошая идея, но пользоваться вроде бы удобно
-            set { _cancellation = value; }
+            this.cancellation = cancellation ?? Cancellation.NonCancalable;
+            ForcedDegreeOfParallelism = forcedDegreeOfParallelism;
         }
-        public int? ForcedDegreeOfParallelizm { get; set; }
+
+        public ParallelSettings Modified(int? forcedDegreeOfParallelism = null)
+        {
+            return new ParallelSettings(Cancellation, forcedDegreeOfParallelism ?? this.ForcedDegreeOfParallelism);
+        }
     }
 }

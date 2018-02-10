@@ -11,7 +11,7 @@ namespace TestGZipTest
     [TestClass]
     public class TestCompression
     {
-        //TODO test the other one set of compress-decompress methods (after extraction Compressor, see todo notes on Compression class)
+        //TODO test the other one set of compress-decompress methods (after extraction Compressor, see TODO-notes on Compression class)
 
         private static byte[] GetCompressed(byte[] array)
         {
@@ -67,7 +67,7 @@ namespace TestGZipTest
         {
             var compression = new Compression();
             
-            var almostEndlessStream = new AlmostEndlessStreamMock();
+            var almostEndlessStream = new EndlessStreamMock();
             using (var dst = new MemoryStream())
             {
                 var thread = new Thread(() =>

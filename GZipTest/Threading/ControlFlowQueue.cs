@@ -5,8 +5,8 @@ namespace GZipTest.Threading
 {
     internal class ControlFlowQueue : IDisposable
     {
-        private readonly AutoResetEvent _kernelLock = new AutoResetEvent(false);
-        private int _waitersCount;
+        private readonly AutoResetEvent kernelLock = new AutoResetEvent(false);
+        private int waitersCount;
 
         public void Enter()
         {
@@ -15,36 +15,36 @@ namespace GZipTest.Threading
 
         internal bool TryEnter(bool threadBlockingAllowed = false)
         {
-            const int spinCount = 1000;
+            const int SpinCount = 1000;
 
             if (!threadBlockingAllowed)
-                return Interlocked.CompareExchange(ref _waitersCount, 1, 0) == 0;
+                return Interlocked.CompareExchange(ref waitersCount, 1, 0) == 0;
 
-            var spinWait = new SpinWaitStolen();
-            for (var i = 0; i < spinCount; i++)
+            var spinWait = new SpinWait();
+            for (var i = 0; i < SpinCount; i++)
             {
-                if (Interlocked.CompareExchange(ref _waitersCount, 1, 0) == 0)
+                if (Interlocked.CompareExchange(ref waitersCount, 1, 0) == 0)
                     return true;
 
                 spinWait.SpinOnce();
             }
 
-            if (Interlocked.Increment(ref _waitersCount) == 1)
+            if (Interlocked.Increment(ref waitersCount) == 1)
                 return true;
                         
-            _kernelLock.WaitOne();
+            kernelLock.WaitOne();
             return true;
         }
 
         public void Exit()
         {
-            if (Interlocked.Decrement(ref _waitersCount) > 0)
-                _kernelLock.Set();
+            if (Interlocked.Decrement(ref waitersCount) > 0)
+                kernelLock.Set();
         }
 
         public void Dispose()
         {
-            ((IDisposable)_kernelLock).Dispose(); 
+            ((IDisposable)kernelLock).Dispose(); 
             // Not sure is it good idea or not to invoke Dispose this way. Perhaps there were some reasons to make it protected in 3.5
         }
     }

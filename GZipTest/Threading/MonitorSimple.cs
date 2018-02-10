@@ -3,9 +3,7 @@ using System.Threading;
 
 namespace GZipTest.Threading
 {
-    //todo? insert Thread.MemoryBarrier invocations
-
-    public class MonitorSimple: IDisposable
+ public class MonitorSimple: IDisposable
     {
         private readonly ControlFlowQueue readyQueue = new ControlFlowQueue();
 
@@ -59,7 +57,7 @@ namespace GZipTest.Threading
             owning.CheckIsOwnedByCurrentThread();
 
             Interlocked.Increment(ref waitersCount);
-            // it's vitally important to increment _waitersCount before releasing _readyQueue. 
+            // Increment _waitersCount before releasing _readyQueue. 
             // Otherwise theoretically Pulse() can be invoked before _watersCount is incremented, find no waiters and do not "open" _waitGate.
 
             var savedOwningState = owning;
@@ -108,16 +106,16 @@ namespace GZipTest.Threading
         
         public struct LockHandle : IDisposable
         {
-            private readonly MonitorSimple _source;
+            private readonly MonitorSimple source;
 
             public LockHandle(MonitorSimple source)
             {
-                _source = source;
+                this.source = source;
             }
 
             public void Dispose()
             {
-                _source.Exit();
+                source.Exit();
             }
         }
     }

@@ -22,7 +22,7 @@ namespace GZipTest
             CompressionMode mode;
             string sourceFileName;
             string targetFileName;
-            if (!ValidateStartupAgrs(args, out mode, out sourceFileName, out targetFileName))
+            if (!ValidateStartupArgs(args, out mode, out sourceFileName, out targetFileName))
             {
                 Console.WriteLine("The syntax of the command params is incorrect. Should be: (compress|decompress) Source Destination");
                 return ErrorAppExitCode;
@@ -97,7 +97,7 @@ namespace GZipTest
             return errorLogFile;
         }
 
-        private static bool ValidateStartupAgrs(IList<string> args, out CompressionMode mode, out string srcFileName, out string dstFileName)
+        private static bool ValidateStartupArgs(IList<string> args, out CompressionMode mode, out string srcFileName, out string dstFileName)
         {
             mode = default (CompressionMode);
             srcFileName = null;

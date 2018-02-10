@@ -40,7 +40,7 @@ namespace TestGZipTest
         }
 
         [TestMethod]
-        public void TestStressLockedSectionsDoNotOverlapp()
+        public void TestStressLockedSectionsDoNotOverlap()
         {
             const int Iterations = 100000;
 

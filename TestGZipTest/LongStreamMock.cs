@@ -3,7 +3,7 @@ using System.IO;
 
 namespace TestGZipTest
 {
-    public class AlmostEndlessStreamMock: Stream
+    public class EndlessStreamMock: Stream
     {
         public override void Flush()
         {
@@ -39,26 +39,14 @@ namespace TestGZipTest
             throw new InvalidOperationException();
         }
 
-        public override bool CanRead
-        {
-            get { return true; }
-        }
-
-        public override bool CanSeek
-        {
-            get { return false; }
-        }
-
-        public override bool CanWrite
-        {
-            get { return false; }
-        }
-
-        public override long Length
-        {
-            get { return long.MaxValue; }
-        }
-
         public override long Position { get; set; }
+
+        public override bool CanRead => true;
+
+        public override bool CanSeek => false;
+
+        public override bool CanWrite => false;
+
+        public override long Length => long.MaxValue;
     }
 }

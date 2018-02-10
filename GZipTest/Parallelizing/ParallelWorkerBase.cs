@@ -8,7 +8,6 @@ namespace GZipTest.Parallelizing
     internal class ParallelWorkerBase
     {
         private readonly ParallelSettings settings;
-        
         private readonly ManualResetEvent finishedEvent = new ManualResetEvent(false);
 
         private readonly BoolFlag started = new BoolFlag(false);
@@ -19,7 +18,6 @@ namespace GZipTest.Parallelizing
         protected ParallelWorkerBase(ParallelSettings settings = default(ParallelSettings))
         {
             this.settings = settings;
-            this.settings.Cancellation = this.settings.Cancellation ?? Cancellation.Uncancallable;
             this.settings.Cancellation.RegisterCallback(Cancellation_Canceled);
         }
 
@@ -32,7 +30,7 @@ namespace GZipTest.Parallelizing
 
             var combinedCancellation = Cancellation.CreateLinked(settings.Cancellation);
 
-            var threadCount = settings.ForcedDegreeOfParallelizm ?? Parallelism.DefaultDegree;
+            var threadCount = settings.ForcedDegreeOfParallelism ?? Parallelism.DefaultDegree;
             var threadsFinished = 0;
 
             Debug.Assert(threadCount > 0);
@@ -40,30 +38,30 @@ namespace GZipTest.Parallelizing
             for (var i = 0; i < threadCount; i++)
             {
                 var threadIndex = i;
-                var th = new Thread(
-                    () =>
-                    {
-                        try
+                var thread = new Thread(
+                        () =>
                         {
-                            DoWork(combinedCancellation, threadCount, threadIndex);
-                        }
-                        catch (Exception e)
-                        {
-                            Interlocked.CompareExchange(ref firstHappenedException, e, null);
-                            combinedCancellation.Cancel();
-                        }
-                        finally
-                        {
-                            if (Interlocked.Increment(ref threadsFinished) == threadCount)
+                            try
                             {
-                                OnLastWorkerFinishing();
-                                Finish();
+                                DoWork(combinedCancellation, threadCount, threadIndex);
                             }
-                        }
-                    })
-                { IsBackground = true };
+                            catch (Exception e)
+                            {
+                                Interlocked.CompareExchange(ref firstHappenedException, e, null);
+                                combinedCancellation.Cancel();
+                            }
+                            finally
+                            {
+                                if (Interlocked.Increment(ref threadsFinished) == threadCount)
+                                {
+                                    OnLastWorkerFinishing();
+                                    Finish();
+                                }
+                            }
+                        })
+                    {IsBackground = true};
 
-                th.Start();
+                thread.Start();
             }
         }
 
@@ -74,13 +72,10 @@ namespace GZipTest.Parallelizing
             if (firstHappenedException != null)
                 CrossThreadTransferredException.Rethrow(firstHappenedException);
 
-            //https://msdn.microsoft.com/en-us/library/system.componentmodel.asynccompletedeventargs.error(v=vs.110).aspx
-            //The value of the Error property is null if the operation was canceled.
-
-            settings.Cancellation.ThrowIfCancelled();
+            settings.Cancellation.ThrowIfCanceled();
         }
 
-        protected bool IsFinished { get { return finished; } }
+        protected bool IsFinished => finished.Value;
 
         protected virtual void DoWork(Cancellation cancellation, int workersTotal, int thisWorkerIndex) {}
 

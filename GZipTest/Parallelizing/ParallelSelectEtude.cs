@@ -7,7 +7,8 @@ namespace GZipTest.Parallelizing
 {
     public static class ParallelSelectEtude
     {
-        // It's just for self-trainings. I do realize these all is to complicated and weird for production-quality code.
+        // Here is an amount of complicated and even weird for production-quality code.
+        // It's just for self-trainings. 
 
         private static BlockingQueue<TDestination> StartSelecting<TSource, TDestination>(
             Func<IEnumerable<TSource>> getSource, 
@@ -32,7 +33,7 @@ namespace GZipTest.Parallelizing
                     {
                         foreach (var item in capturedSource)
                         {
-                            cancellation.ThrowIfCancelled();
+                            cancellation.ThrowIfCanceled();
 
                             Thread.MemoryBarrier();
                             if (firstException != null)
@@ -68,7 +69,7 @@ namespace GZipTest.Parallelizing
             int prefetchBufferCapacity = -1, 
             int outputBufferCapacity = -1)
         {
-            cancellation = cancellation ?? Cancellation.Uncancallable;
+            cancellation = cancellation ?? Cancellation.NonCancalable;
             Exception firstException = null;
             Action<Exception> onException = e => Interlocked.CompareExchange(ref firstException, e, null);
 

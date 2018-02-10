@@ -52,8 +52,10 @@ namespace TestGZipTest
                 return n;
             });
 
-            var doForAll = new ForAll<int>(endlessSource, n => Thread.VolatileWrite(ref lastProcessed, n),
-                new ParallelSettings {Cancellation = cancellation});
+            var doForAll = new ForAll<int>(
+                source: endlessSource, 
+                action: n => Thread.VolatileWrite(ref lastProcessed, n),
+                settings: new ParallelSettings(cancellation));
 
             doForAll.RegisterOnFinished(f => canceled = f.IsCanceled);
 

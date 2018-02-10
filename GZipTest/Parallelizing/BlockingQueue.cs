@@ -59,7 +59,9 @@ namespace GZipTest.Parallelizing
                     throw new InvalidOperationException();
 
                 while (boundedCapacity >= 0 && queue.Count >= boundedCapacity && !IsAddingCompleted)
+                {
                     sync.Wait();
+                }
 
                 queue.Enqueue(item);
                 sync.Pulse();
@@ -69,7 +71,7 @@ namespace GZipTest.Parallelizing
         /// <summary>
         /// Takes an item away from collection. If collection is empty, blocks control flow and waits until new item comes or CompleteAdding is invoked.
         /// </summary>
-        /// <returns>Whether an item was taken or not</returns>
+        /// <returns>Whether the item was taken or not</returns>
         private bool TakeOrTryWait(out T item)
         {
             using (sync.GetLocked())

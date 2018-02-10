@@ -27,6 +27,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
+    <LangVersion>6</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -53,7 +54,7 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
-    <Compile Include="AlmostEndlessStreamMock.cs" />
+    <Compile Include="LongStreamMock.cs" />
     <Compile Include="DisposableEnumerator.cs" />
     <Compile Include="TestCompression.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

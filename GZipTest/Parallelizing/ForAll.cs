@@ -5,7 +5,7 @@ using System.Threading;
 namespace GZipTest.Parallelizing
 {
     /// <summary>
-    /// Executes an action for each item of IEnumerable attempting to do it parallely.
+    /// Executes an action for each item of IEnumerable attempting to do it in parallel.
     /// </summary>
     internal class ForAll<T>: ParallelWorkerBase
     {
@@ -43,9 +43,8 @@ namespace GZipTest.Parallelizing
 
         public void RegisterOnFinished(Action<ForAll<T>> callback)
         {
-            // TODO what if got finished "after" checking IsFinished but "before" subscribing?
-            // TODO what about subscribing more then once?
-            // TODO consider moving these all into base class
+            // TODO !!! what if got finished "after" checking IsFinished but "before" subscribing?
+            // TODO consider moving these all into base class (since any kind "worker" can finish work)
 
             if (IsFinished)
                 callback(this);

@@ -2,12 +2,13 @@ using System.Threading;
 
 namespace GZipTest.Threading
 {
-    public class BoolFlag //tdoo rename
+    //todo rename?
+    public class BoolFlag 
     {
         private const int FalseValue = 0;
         private const int TrueValue = 1;
 
-        private int _value;
+        private int value;
 
         private static int BoolToInt(bool value)
         {
@@ -17,12 +18,14 @@ namespace GZipTest.Threading
 
         public static implicit operator bool(BoolFlag flag)
         {
-            return flag._value == TrueValue;
+            return flag.Value;
         }
+
+        public bool Value => value == TrueValue;
       
         public bool InterlockedCompareAssign(bool newValue, bool comparand)
         {
-            return Interlocked.CompareExchange(ref _value, 
+            return Interlocked.CompareExchange(ref value, 
                 BoolToInt(newValue), 
                 BoolToInt(comparand)) != FalseValue;
         }
@@ -33,7 +36,7 @@ namespace GZipTest.Threading
 
         public BoolFlag(bool value)
         {
-            _value = value ? TrueValue : FalseValue;
+            this.value = value ? TrueValue : FalseValue;
         }
     }
 }

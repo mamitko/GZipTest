@@ -1,13 +1,11 @@
 namespace GZipTest.Threading
 {
     /// <summary>
-    /// В настоящем коде не использовать!
-    /// Класс таким создан исключительно в экспериментальных целях 
-    /// и из иррацональных эстетических побуждений (для мимикрии под bool, а она вредна).
+    /// This class is a kind of experiment and not intended to be used in production code
     /// </summary>
     internal sealed class ReferenceBool
     {
-        private static readonly ReferenceBool TrueInstance = new ReferenceBool();
+        private static readonly ReferenceBool trueInstance = new ReferenceBool();
 
         private ReferenceBool() { }
 
@@ -18,7 +16,7 @@ namespace GZipTest.Threading
 
         public static implicit operator ReferenceBool(bool value)
         {
-            return value ? TrueInstance : null; 
+            return value ? trueInstance : null; 
         }
     }
 }
